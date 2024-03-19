@@ -8,14 +8,12 @@ resources:
   - repo: self
 
 parameters:
-  - name: BRANCH_NAME
-    type: string
-    default: 'master'
-    description: 'Enter the branch for all Videogame Store images'
-  - name: IMAGE_TAG
-    type: string
-    default: 'latest'
-    description: 'Enter the versioning for each microservice. Example: 1.0.0'
+- name: BRANCH_NAME
+  type: string
+  default: 'master'
+- name: IMAGE_TAG
+  type: string
+  default: 'latest'
 
 stages:
   - stage: Maven_Stage
