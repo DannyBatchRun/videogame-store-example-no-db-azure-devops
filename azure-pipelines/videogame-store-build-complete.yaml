@@ -7,9 +7,15 @@ trigger:
 resources:
   - repo: self
 
-variables:
-  branchName: '${params.BRANCH_NAME}'
-  imageTag: '${params.IMAGE_TAG}'
+parameters:
+  - name: BRANCH_NAME
+    type: string
+    default: 'master'
+    description: 'Enter the branch for all Videogame Store images'
+  - name: IMAGE_TAG
+    type: string
+    default: 'latest'
+    description: 'Enter the versioning for each microservice. Example: 1.0.0'
 
 stages:
   - stage: Maven_Stage
@@ -90,17 +96,17 @@ stages:
           - task: PowerShell@2
             inputs:
               filePath: 'powershell-scripts/buildService.ps1'
-              arguments: 'buildAndPushOnDocker -Path "store-usersubscription-example" -ImageName usersubscription -ImageTag ${imageTag}'
+              arguments: 'buildAndPushOnDocker -Path "store-usersubscription-example" -ImageName "usersubscription" -ImageTag "${IMAGE_TAG}"'
             displayName: 'Build and Push UserSubscription'
           - task: PowerShell@2
             inputs:
               filePath: 'powershell-scripts/buildService.ps1'
-              arguments: 'buildAndPushOnDocker -Path "store-videogame-products-example" -ImageName videogameproducts -ImageTag ${imageTag}'
+              arguments: 'buildAndPushOnDocker -Path "store-videogame-products-example" -ImageName "videogameproducts" -ImageTag "${IMAGE_TAG}"'
             displayName: 'Build and Push Videogame Products'
           - task: PowerShell@2
             inputs:
               filePath: 'powershell-scripts/buildService.ps1'
-              arguments: 'buildAndPushOnDocker -Path "store-videogamestore-final-example" -ImageName videogamestore -ImageTag ${imageTag}'
+              arguments: 'buildAndPushOnDocker -Path "store-videogamestore-final-example" -ImageName "videogamestore" -ImageTag "${IMAGE_TAG}"'
             displayName: 'Build and Push Videogame Store'
           - task: Docker@2
             inputs:
