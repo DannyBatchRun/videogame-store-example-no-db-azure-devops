@@ -6,8 +6,13 @@ function createJarFile {
     param(
         [string]$Path
     )
+    Write-Output "Changing directory to: $Path"
     Set-Location $Path
+
+    Write-Output "Executing 'mvn -v'..."
     mvn -v
+
+    Write-Output "Executing 'mvn clean install'..."
     mvn clean install
 }
 
