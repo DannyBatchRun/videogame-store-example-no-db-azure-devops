@@ -15,7 +15,7 @@ function buildAndPushOnDocker {
     param(
         [string]$Path,
         [string]$ImageName,
-        [string]$ImageTag,
+        [string]$ImageTag
     )
     $UsernameDockerHub = "dannybatchrun"
     try {
