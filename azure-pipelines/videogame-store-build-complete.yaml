@@ -28,6 +28,7 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
+                sdk d java 21.0.2-sapmchn
                 . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
                 createJarFile -Path "$(Build.SourcesDirectory)/store-usersubscription-example"
             displayName: 'UserSubscription Jar Build'
@@ -35,6 +36,7 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
+                sdk d java 21.0.2-sapmchn
                 . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
                 createJarFile -Path "$(Build.SourcesDirectory)/store-videogame-products-example"
             displayName: 'VideogameProducts Jar Build'
@@ -42,6 +44,7 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
+                sdk d java 21.0.2-sapmchn
                 . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
                 createJarFile -Path "$(Build.SourcesDirectory)/store-videogamestore-final-example"
             displayName: 'VideogameStore Jar Build'
