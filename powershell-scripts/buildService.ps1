@@ -27,9 +27,9 @@ function buildAndPushOnDocker {
     [String]$UsernameDockerHub = "dannybatchrun"
     try {
         Set-Location $Path
-        Start-Process docker buildx build . -t $ImageName
-        Start-Process docker tag --% $ImageName "${UsernameDockerHub}/$ImageName:$ImageTag"
-        Start-Process docker push --% "${UsernameDockerHub}/$ImageName:$ImageTag"
+        docker buildx build . -t $ImageName
+        docker tag --% $ImageName "${UsernameDockerHub}/$ImageName:$ImageTag"
+        docker push --% "${UsernameDockerHub}/$ImageName:$ImageTag"
     } catch {
         Write-Host "Error occurred: $_"
     }

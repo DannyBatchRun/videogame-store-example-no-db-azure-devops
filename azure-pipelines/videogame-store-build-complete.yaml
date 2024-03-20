@@ -13,7 +13,7 @@ parameters:
     default: 'master'
   - name: IMAGE_TAG
     type: string
-    default: '1.4.5'
+    default: 'latest'
 
 stages:
   - stage: Maven_Stage
@@ -24,14 +24,11 @@ stages:
         pool:
           name: Default
         steps:
-          - script: |
-              sudo apt-get update
-              sudo apt-get install -y openjdk-21-jdk
-            displayName: 'Install OpenJDK 21'
           - task: PowerShell@2
             inputs:
               targetType: 'inline'
               script: |
+                $env:JAVA_HOME = "$env:JAVA_HOME"
                 . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
                 createJarFile -Path "$(Build.SourcesDirectory)/store-usersubscription-example"
             displayName: 'UserSubscription Jar Build'
@@ -39,6 +36,7 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
+                $env:JAVA_HOME = "$env:JAVA_HOME"
                 . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
                 createJarFile -Path "$(Build.SourcesDirectory)/store-videogame-products-example"
             displayName: 'VideogameProducts Jar Build'
@@ -46,6 +44,7 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
+                $env:JAVA_HOME = "$env:JAVA_HOME"
                 . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
                 createJarFile -Path "$(Build.SourcesDirectory)/store-videogamestore-final-example"
             displayName: 'VideogameStore Jar Build'
@@ -105,6 +104,7 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
+                $env:JAVA_HOME = "$env:JAVA_HOME"
                 . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
                 buildAndPushOnDocker -Path "$(Build.SourcesDirectory)/store-usersubscription-example" -ImageName "usersubscription" -ImageTag "${IMAGE_TAG}"
             displayName: 'Build and Push UserSubscription'
@@ -112,6 +112,7 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
+                $env:JAVA_HOME = "$env:JAVA_HOME"
                 . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
                 buildAndPushOnDocker -Path "$(Build.SourcesDirectory)/store-videogame-products-example" -ImageName "videogameproducts" -ImageTag "${IMAGE_TAG}"
             displayName: 'Build and Push Videogame Products'
@@ -119,12 +120,14 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
+                $env:JAVA_HOME = "$env:JAVA_HOME"
                 . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
                 buildAndPushOnDocker -Path "$(Build.SourcesDirectory)/store-videogamestore-final-example" -ImageName "videogamestore" -ImageTag "${IMAGE_TAG}"
             displayName: 'Build and Push Videogame Store'
           - task: Docker@2
             inputs:
               command: 'logout'
+
 
 
 
