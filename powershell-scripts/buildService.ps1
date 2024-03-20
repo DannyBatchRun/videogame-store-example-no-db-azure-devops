@@ -27,6 +27,7 @@ function buildAndPushOnDocker {
         [string]$Path,
         [string]$ImageName,
         [string]$ImageTag
+    )
     try {
         Set-Location $Path
         [string]$UsernameDockerHub = "dannybatchrun"
@@ -40,7 +41,6 @@ function buildAndPushOnDocker {
         Write-Host "Error occurred: $_"
     }
 }
-
 
 
 
