@@ -32,9 +32,12 @@ function buildAndPushOnDocker {
     try {
         Set-Location $Path
         docker buildx build . -t $ImageName
-        docker tag --% $ImageName "${UsernameDockerHub}/${ImageName}:${ImageTag}"
-        docker push --% "${UsernameDockerHub}/{$ImageName}:${ImageTag}"
+        $taggedImage = "${UsernameDockerHub}/" + $ImageName + ":" + $ImageTag
+        docker tag --% $ImageName $taggedImage
+        docker push --% $taggedImage
     } catch {
         Write-Host "Error occurred: $_"
     }
 }
+
+
