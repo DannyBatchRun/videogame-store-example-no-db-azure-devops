@@ -34,10 +34,21 @@ function buildAndPushOnDocker {
         docker buildx build . -t $ImageName
         $lowercaseImageName = $ImageName.ToLower()
         $repositoryName = "${UsernameDockerHub}/$lowercaseImageName"
-        $taggedImage = "$repositoryName:$ImageTag"
+        $taggedImage = "${repositoryName}:${ImageTag}"
         docker tag $ImageName $taggedImage
         docker push $taggedImage
     } catch {
         Write-Host "Error occurred: $_"
     }
 }
+
+
+
+
+
+
+
+
+
+
+
