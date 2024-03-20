@@ -13,7 +13,7 @@ parameters:
     default: 'master'
   - name: IMAGE_TAG
     type: string
-    default: 'latest'
+    default: '1.4.5'
 
 stages:
   - stage: Maven_Stage
@@ -24,6 +24,10 @@ stages:
         pool:
           name: Default
         steps:
+          - script: |
+              sudo apt-get update
+              sudo apt-get install -y openjdk-21-jdk
+            displayName: 'Install OpenJDK 21'
           - task: PowerShell@2
             inputs:
               targetType: 'inline'
@@ -121,5 +125,6 @@ stages:
           - task: Docker@2
             inputs:
               command: 'logout'
+
 
 
