@@ -29,17 +29,8 @@ stages:
               targetType: 'inline'
               script: |
                 . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
-                installDependencies
-            displayName: 'Install Dependencies'
-          - task: PowerShell@2
-            inputs:
-              targetType: 'inline'
-              script: |
-                . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
                 createJarFile -Path "$(Build.SourcesDirectory)/store-usersubscription-example"
             displayName: 'UserSubscription Jar Build'
-            env:
-              JAVA_HOME: $(JAVA_HOME)
           - task: PowerShell@2
             inputs:
               targetType: 'inline'
@@ -47,8 +38,6 @@ stages:
                 . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
                 createJarFile -Path "$(Build.SourcesDirectory)/store-videogame-products-example"
             displayName: 'VideogameProducts Jar Build'
-            env:
-              JAVA_HOME: $(JAVA_HOME)
           - task: PowerShell@2
             inputs:
               targetType: 'inline'
@@ -56,8 +45,6 @@ stages:
                 . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
                 createJarFile -Path "$(Build.SourcesDirectory)/store-videogamestore-final-example"
             displayName: 'VideogameStore Jar Build'
-            env:
-              JAVA_HOME: $(JAVA_HOME)
           - task: PublishPipelineArtifact@1
             inputs:
               targetPath: '$(Build.SourcesDirectory)/store-usersubscription-example/target/usersubscription.jar'
@@ -70,8 +57,8 @@ stages:
             displayName: 'Publish Artifact VideogameProducts'
           - task: PublishPipelineArtifact@1
             inputs:
-              targetPath: '$(Build.SourcesDirectory)/store-videogamestore-final-example/target/videogamestore.jar'
-              artifact: 'videogamestore.jar'
+              targetPath: '$(Build.SourcesDirectory)/store-videogamestore-final-example/target/videogamestorefinal.jar'
+              artifact: 'videogamestorefinal.jar'
             displayName: 'Publish Artifact VideogameStore'
   - stage: Build_and_Push_Stage
     displayName: Docker Stage
@@ -134,7 +121,6 @@ stages:
           - task: Docker@2
             inputs:
               command: 'logout'
-
 
 
 

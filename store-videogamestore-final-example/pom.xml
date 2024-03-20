@@ -57,6 +57,6 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
 		</plugins>
-		<finalName>videogamestore</finalName>
+		<finalName>videogamestorefinal</finalName>
 	</build>
 </project>
