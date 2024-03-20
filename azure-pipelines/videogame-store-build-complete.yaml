@@ -29,31 +29,34 @@ stages:
               source "$HOME/.sdkman/bin/sdkman-init.sh"
               sdk i java 21.0.2-sapmchn
               sdk d java 21.0.2-sapmchn
-            displayName: 'Install JDK 21 Sapmachine'
+            displayName: 'Install OpenJDK 21'
           - task: PowerShell@2
             inputs:
               targetType: 'inline'
               script: |
-                sdk d java 21.0.2-sapmchn
                 . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
                 createJarFile -Path "$(Build.SourcesDirectory)/store-usersubscription-example"
             displayName: 'UserSubscription Jar Build'
+            env:
+              JAVA_HOME: $(JAVA_HOME)
           - task: PowerShell@2
             inputs:
               targetType: 'inline'
               script: |
-                sdk d java 21.0.2-sapmchn
                 . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
                 createJarFile -Path "$(Build.SourcesDirectory)/store-videogame-products-example"
             displayName: 'VideogameProducts Jar Build'
+            env:
+              JAVA_HOME: $(JAVA_HOME)
           - task: PowerShell@2
             inputs:
               targetType: 'inline'
               script: |
-                sdk d java 21.0.2-sapmchn
                 . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
                 createJarFile -Path "$(Build.SourcesDirectory)/store-videogamestore-final-example"
             displayName: 'VideogameStore Jar Build'
+            env:
+              JAVA_HOME: $(JAVA_HOME)
           - task: PublishPipelineArtifact@1
             inputs:
               targetPath: '$(Build.SourcesDirectory)/store-usersubscription-example/target/usersubscription.jar'
