@@ -9,8 +9,8 @@ function createJarFile {
     try {
         Set-Location $Path
         Write-Host "Current Directory: $(Get-Location)"
-        Start-Process "mvn -v"
-        Start-Process "mvn clean install"
+        mvn -v
+        mvn clean install
     }
     catch {
         Write-Host "Error occurred: $_"
