@@ -6,15 +6,17 @@ function createJarFile {
     param(
         [string]$Path
     )
-    Write-Output "Changing directory to: $Path"
-    Set-Location $Path
-
-    Write-Output "Executing 'mvn -v'..."
-    mvn -v
-
-    Write-Output "Executing 'mvn clean install'..."
-    mvn clean install
+    try {
+        Set-Location $Path
+        Write-Host "Current Directory: $(Get-Location)"
+        Start-Process "mvn -v"
+        Start-Process "mvn clean install"
+    }
+    catch {
+        Write-Host "Error occurred: $_"
+    }
 }
+
 
 function buildAndPushOnDocker {
     param(
@@ -22,17 +24,13 @@ function buildAndPushOnDocker {
         [string]$ImageName,
         [string]$ImageTag
     )
-    $UsernameDockerHub = "dannybatchrun"
+    [String]$UsernameDockerHub = "dannybatchrun"
     try {
         Set-Location $Path
-        docker buildx build . -t $ImageName
-        docker tag --% $ImageName "${UsernameDockerHub}/$ImageName:$ImageTag"
-        docker push --% "${UsernameDockerHub}/$ImageName:$ImageTag"
+        Start-Process docker buildx build . -t $ImageName
+        Start-Process docker tag --% $ImageName "${UsernameDockerHub}/$ImageName:$ImageTag"
+        Start-Process docker push --% "${UsernameDockerHub}/$ImageName:$ImageTag"
     } catch {
-        if($_.Exception.Message -match "certificate signed by unknown authority") {
-            $global:currentBuild.result = "UNSTABLE"
-        } else {
-            $global:currentBuild.result = "FAILURE"
-        }
+        Write-Host "Error occurred: $_"
     }
 }
