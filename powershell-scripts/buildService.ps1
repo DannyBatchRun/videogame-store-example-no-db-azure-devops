@@ -32,12 +32,15 @@ function buildAndPushOnDocker {
     try {
         Set-Location $Path
         docker buildx build . -t $ImageName
-        $taggedImage = "${UsernameDockerHub}/" + $ImageName + ":" + $ImageTag
-        docker tag --% $ImageName $taggedImage
+        $taggedImage = "${UsernameDockerHub}/" + $ImageName.ToLower() + ":" + $ImageTag.ToLower()
+        docker tag --% $ImageName.ToLower() $taggedImage
         docker push --% $taggedImage
     } catch {
         Write-Host "Error occurred: $_"
     }
 }
+
+
+
 
 
