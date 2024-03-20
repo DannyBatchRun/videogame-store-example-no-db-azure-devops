@@ -11,9 +11,11 @@ parameters:
   - name: BRANCH_NAME
     type: string
     default: 'master'
+    description: 'Enter the branch for all Videogame Store images'
   - name: IMAGE_TAG
     type: string
     default: 'latest'
+    description: 'Enter the versioning for each microservice. Example: 1.0.0'
 
 stages:
   - stage: Maven_Stage
@@ -26,18 +28,24 @@ stages:
         steps:
           - task: PowerShell@2
             inputs:
-              filePath: '$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1'
-              arguments: 'createJarFile -Path "$(Build.SourcesDirectory)/store-usersubscription-example"'
+              targetType: 'inline'
+              script: |
+                . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
+                createJarFile -Path "$(Build.SourcesDirectory)/store-usersubscription-example"
             displayName: 'UserSubscription Jar Build'
           - task: PowerShell@2
             inputs:
-              filePath: '$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1'
-              arguments: 'createJarFile -Path "$(Build.SourcesDirectory)/store-videogame-products-example"'
+              targetType: 'inline'
+              script: |
+                . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
+                createJarFile -Path "$(Build.SourcesDirectory)/store-videogame-products-example"
             displayName: 'VideogameProducts Jar Build'
           - task: PowerShell@2
             inputs:
-              filePath: '$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1'
-              arguments: 'createJarFile -Path "$(Build.SourcesDirectory)/store-videogamestore-final-example"'
+              targetType: 'inline'
+              script: |
+                . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
+                createJarFile -Path "$(Build.SourcesDirectory)/store-videogamestore-final-example"
             displayName: 'VideogameStore Jar Build'
           - task: PublishPipelineArtifact@1
             inputs:
@@ -93,20 +101,27 @@ stages:
               displayName: 'Docker Login'
           - task: PowerShell@2
             inputs:
-              filePath: '$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1'
-              arguments: 'buildAndPushOnDocker -Path "store-usersubscription-example" -ImageName "usersubscription" -ImageTag "${IMAGE_TAG}"'
+              targetType: 'inline'
+              script: |
+                . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
+                buildAndPushOnDocker -Path "$(Build.SourcesDirectory)/store-usersubscription-example" -ImageName "usersubscription" -ImageTag "${IMAGE_TAG}"
             displayName: 'Build and Push UserSubscription'
           - task: PowerShell@2
             inputs:
-              filePath: '$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1'
-              arguments: 'buildAndPushOnDocker -Path "store-videogame-products-example" -ImageName "videogameproducts" -ImageTag "${IMAGE_TAG}"'
+              targetType: 'inline'
+              script: |
+                . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
+                buildAndPushOnDocker -Path "$(Build.SourcesDirectory)/store-videogame-products-example" -ImageName "videogameproducts" -ImageTag "${IMAGE_TAG}"
             displayName: 'Build and Push Videogame Products'
           - task: PowerShell@2
             inputs:
-              filePath: '$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1'
-              arguments: 'buildAndPushOnDocker -Path "store-videogamestore-final-example" -ImageName "videogamestore" -ImageTag "${IMAGE_TAG}"'
+              targetType: 'inline'
+              script: |
+                . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
+                buildAndPushOnDocker -Path "$(Build.SourcesDirectory)/store-videogamestore-final-example" -ImageName "videogamestore" -ImageTag "${IMAGE_TAG}"
             displayName: 'Build and Push Videogame Store'
           - task: Docker@2
             inputs:
               command: 'logout'
+
 
