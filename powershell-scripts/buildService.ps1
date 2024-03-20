@@ -3,10 +3,9 @@ function call {
 }
 
 function installDependencies() {
-    curl -s "https://get.sdkman.io" | bash
-    source "$HOME/.sdkman/bin/sdkman-init.sh"
-    sdk i java 21.0.2-sapmchn
-    sdk d java 21.0.2-sapmchn
+    Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+    choco install openjdk --version 21.0.2
+    [Environment]::SetEnvironmentVariable("JAVA_HOME", "/bin/java", [EnvironmentVariableTarget]::Machine)
 }
 
 function createJarFile {
