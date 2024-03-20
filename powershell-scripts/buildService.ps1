@@ -2,6 +2,13 @@ function call {
     Write-Host "VideogameService initialized"
 }
 
+function installDependencies() {
+    curl -s "https://get.sdkman.io" | bash
+    source "$HOME/.sdkman/bin/sdkman-init.sh"
+    sdk i java 21.0.2-sapmchn
+    sdk d java 21.0.2-sapmchn
+}
+
 function createJarFile {
     param(
         [string]$Path
@@ -9,8 +16,8 @@ function createJarFile {
     try {
         Set-Location $Path
         Write-Host "Current Directory: $(Get-Location)"
-        /opt/maven/bin/mvn -v
-        /opt/maven/bin/mvn clean install
+        mvn -v
+        mvn clean install
     }
     catch {
         Write-Host "Error occurred: $_"
