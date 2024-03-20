@@ -102,25 +102,26 @@ stages:
               targetType: 'inline'
               script: |
                 . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
-                buildAndPushOnDocker -Path "$(Build.SourcesDirectory)/store-usersubscription-example" -ImageName "usersubscription" -ImageTag "${IMAGE_TAG}"
+                buildAndPushOnDocker -Path "$(Build.SourcesDirectory)/store-usersubscription-example" -ImageName "usersubscription" -ImageTag "$(IMAGE_TAG)"
             displayName: 'Build and Push UserSubscription'
           - task: PowerShell@2
             inputs:
               targetType: 'inline'
               script: |
                 . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
-                buildAndPushOnDocker -Path "$(Build.SourcesDirectory)/store-videogame-products-example" -ImageName "videogameproducts" -ImageTag "${IMAGE_TAG}"
+                buildAndPushOnDocker -Path "$(Build.SourcesDirectory)/store-videogame-products-example" -ImageName "videogameproducts" -ImageTag "$(IMAGE_TAG)"
             displayName: 'Build and Push Videogame Products'
           - task: PowerShell@2
             inputs:
               targetType: 'inline'
               script: |
                 . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
-                buildAndPushOnDocker -Path "$(Build.SourcesDirectory)/store-videogamestore-final-example" -ImageName "videogamestore" -ImageTag "${IMAGE_TAG}"
+                buildAndPushOnDocker -Path "$(Build.SourcesDirectory)/store-videogamestore-final-example" -ImageName "videogamestore" -ImageTag "$(IMAGE_TAG)"
             displayName: 'Build and Push Videogame Store'
           - task: Docker@2
             inputs:
               command: 'logout'
+
 
 
 
