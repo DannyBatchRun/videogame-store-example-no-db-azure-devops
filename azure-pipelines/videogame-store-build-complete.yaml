@@ -24,6 +24,12 @@ stages:
         pool:
           name: Default
         steps:
+          - script: |
+              curl -s "https://get.sdkman.io" | bash
+              source "$HOME/.sdkman/bin/sdkman-init.sh"
+              sdk i java 21.0.2-sapmchn
+              sdk d java 21.0.2-sapmchn
+            displayName: 'Install JDK 21 Sapmachine'
           - task: PowerShell@2
             inputs:
               targetType: 'inline'
