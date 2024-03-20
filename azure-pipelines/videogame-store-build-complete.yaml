@@ -90,7 +90,7 @@ stages:
             inputs:
               buildType: 'current'
               downloadType: 'single'
-              artifactName: 'videogamestore.jar'
+              artifactName: 'videogamestorefinal.jar'
               downloadPath: '$(Build.SourcesDirectory)/store-videogamestore-final-example/target/'
           - task: Docker@2
             inputs:
@@ -121,6 +121,7 @@ stages:
           - task: Docker@2
             inputs:
               command: 'logout'
+
 
 
 
