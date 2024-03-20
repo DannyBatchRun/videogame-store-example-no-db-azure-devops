@@ -11,8 +11,24 @@ function createJarFile {
         [string]$Path
     )
     try {
+        # Install OpenJDK 21 using apt
+        sudo apt update
+        sudo apt install openjdk-11-jdk -y
+
+        # Set JAVA_HOME environment variable
+        $env:JAVA_HOME = "/usr/lib/jvm/java-1.21.0-openjdk-amd64"
+
+        # Update PATH to include JDK bin directory
+        $env:PATH = "$env:JAVA_HOME/bin;$env:PATH"
+
+        # Confirm Java version
+        java -version
+
+        # Navigate to the specified path
         Set-Location $Path
         Write-Host "Current Directory: $(Get-Location)"
+
+        # Run Maven commands
         mvn -v
         mvn clean install
     }
@@ -20,6 +36,10 @@ function createJarFile {
         Write-Host "Error occurred: $_"
     }
 }
+
+# Call the function with the desired path
+createJarFile -Path "store-videogame-products-example"
+
 
 
 function buildAndPushOnDocker {
