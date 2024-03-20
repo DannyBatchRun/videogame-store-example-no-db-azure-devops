@@ -24,17 +24,10 @@ stages:
         pool:
           name: Default
         steps:
-          - script: |
-              sudo apt-get update
-              sudo apt-get install -y openjdk-21-jdk
-              export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
-              source ~/.bashrc
-            displayName: 'Install Java 21'
           - task: PowerShell@2
             inputs:
               targetType: 'inline'
               script: |
-                $env:JAVA_HOME = "$env:JAVA_HOME"
                 . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
                 createJarFile -Path "$(Build.SourcesDirectory)/store-usersubscription-example"
             displayName: 'UserSubscription Jar Build'
@@ -42,7 +35,6 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
-                $env:JAVA_HOME = "$env:JAVA_HOME"
                 . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
                 createJarFile -Path "$(Build.SourcesDirectory)/store-videogame-products-example"
             displayName: 'VideogameProducts Jar Build'
@@ -50,7 +42,6 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
-                $env:JAVA_HOME = "$env:JAVA_HOME"
                 . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
                 createJarFile -Path "$(Build.SourcesDirectory)/store-videogamestore-final-example"
             displayName: 'VideogameStore Jar Build'
@@ -130,6 +121,7 @@ stages:
           - task: Docker@2
             inputs:
               command: 'logout'
+
 
 
 
