@@ -1,9 +1,12 @@
 function callVar {
     param(
-        [string]$Path,
+        [string]$ImagePath,
         [string]$ImageName,
         [string]$ImageTag
     )
+
+    $ImageTag = $env:IMAGE_TAG
+    Write-Host "IMAGE_TAG value: $ImageTag"
     [string]$UsernameDockerHub = "dannybatchrun"
     [string]$ImageName = "usersubscription"
     [string]$repositoryName = "$UsernameDockerHub/$ImageName"
