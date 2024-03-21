@@ -26,10 +26,9 @@ jobs:
         inputs:
           targetType: 'inline'
           script: |
-            Write-Host "IMAGE_TAG value: $env:IMAGE_TAG"
-            . "$(Build.SourcesDirectory)/powershell-scripts/example.ps1"
-            callVar -Path "$(Build.SourcesDirectory)/store-usersubscription-example" -ImageName "usersubscription" -ImageTag $env:IMAGE_TAG
+            . "$(Build.SourcesDirectory)/powershell-scripts/example.ps1" -ImagePath "$(Build.SourcesDirectory)/store-usersubscription-example" -ImageName "usersubscription" -ImageTag "$(IMAGE_TAG)"
         displayName: 'Build and Push UserSubscription'
+
 
 
       - task: PowerShell@2
