@@ -26,7 +26,9 @@ jobs:
         inputs:
           targetType: 'inline'
           script: |
-            . "$(Build.SourcesDirectory)/powershell-scripts/example.ps1" -ImagePath "$(Build.SourcesDirectory)/store-usersubscription-example" -ImageName "usersubscription" -ImageTag "$(IMAGE_TAG)"
+            $ImageTag = "$(IMAGE_TAG)"
+            Write-Host "IMAGE_TAG value: $ImageTag"
+            . "$(Build.SourcesDirectory)/powershell-scripts/example.ps1" -ImagePath "$(Build.SourcesDirectory)/store-usersubscription-example" -ImageName "usersubscription" -ImageTag $ImageTag
         displayName: 'Build and Push UserSubscription'
 
 
