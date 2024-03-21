@@ -31,7 +31,7 @@ stages:
         pool:
           name: Default
         steps:
-          - script: |
+          - pwsh: |
               [string]$serviceName = ${{ parameters.imageName }}
               [bool]$deployAllOrNot = ${{ parameters.deployAll }}
               [string]$servicePort
@@ -124,6 +124,10 @@ stages:
             inputs:
               sourceFolder: '$(Build.SourcesDirectory)'
               contents: '**'
+
+
+
+
 
 
 
