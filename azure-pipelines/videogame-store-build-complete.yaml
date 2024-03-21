@@ -83,16 +83,21 @@ stages:
           - task: Docker@2
             inputs:
               command: 'logout'
-post:
-  success:
-    steps:
-      - script: |
-          echo "Pipeline Success"
-        displayName: 'Print Success Message'
-  failure:
-    steps:
-      - script: |
-          echo "Pipeline Failure"
-        displayName: 'Print Failure Message'
+  - stage: Cleanup
+    displayName: Cleanup Stage
+    dependsOn: Build
+    condition: always()
+    jobs:
+      - job: CleanupJob
+        displayName: Cleanup Job
+        steps:
+          - script: |
+              echo "Pipeline ${{ if eq(variables['Build.Reason'], 'PullRequest') }}Success${{ else }}Failure${{ endif }}"
+            displayName: 'Print Pipeline Status'
+          - task: DeleteFiles@1
+            inputs:
+              sourceFolder: '$(Build.SourcesDirectory)'
+              contents: '**'
+              cleanTargetFolder: true
 
 
