@@ -9,18 +9,9 @@ function getServicePort {
     )
     [string]$servicePort
     switch ($microservice) {
-        "usersubscription":
-            $servicePort = "8090"
-            break
-        "videogameproducts":
-            $servicePort = "8100"
-            break
-        "videogamestore":
-            $servicePort = "8080"
-            break
-        default {
-            $servicePort = "80"
-        }
+        "usersubscription" { $servicePort = "8090"; Break }
+        "videogameproducts" { $servicePort = "8100"; Break }
+        "videogamestore" { $servicePort = "8080"; Break }
     }
     return $servicePort
 }
