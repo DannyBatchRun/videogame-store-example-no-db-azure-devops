@@ -26,7 +26,8 @@ jobs:
         inputs:
           targetType: 'inline'
           script: |
-            . "$(Build.SourcesDirectory)/powershell-scripts/example.ps1" -ImagePath "$(Build.SourcesDirectory)/store-usersubscription-example" -ImageName "usersubscription"
+            . "$(Build.SourcesDirectory)/powershell-scripts/example.ps1"
+            callVar -ImagePath "$(Build.SourcesDirectory)/store-usersubscription-example" -ImageName "usersubscription"
         displayName: 'Build and Push UserSubscription'
 
 

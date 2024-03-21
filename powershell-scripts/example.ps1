@@ -1,6 +1,6 @@
 function callVar {
     param(
-        [string]$ImagePath,
+        [string]$Path,
         [string]$ImageName,
         [string]$ImageTag
     )
