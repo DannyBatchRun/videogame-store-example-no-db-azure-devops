@@ -37,7 +37,7 @@ stages:
               [string]$servicePort
               if($deployAllOrNot -eq $true) {
                 Write-Host "You have selected Deploy All. Get Service port will not called."
-              } else if ($deployAllOrNot -eq $false) {
+              } elseif ($deployAllOrNot -eq $false) {
                 . "$(Build.SourcesDirectory)/powershell-scripts/deployService.ps1"
                 $servicePort = getServicePort -microservice ${{ parameters.imageName }}
               }
@@ -73,7 +73,7 @@ stages:
                 if($deployAllOrNot -eq $false) {
                   . "$(Build.SourcesDirectory)/powershell-scripts/deployService.ps1"
                   upgradeHelmDeployment -imageName ${{ parameters.imageName }} -imageVersion ${{ parameters.imageVersion }} -imageVersion ${{ parameters.imageVersion }} -servicePort $($servicePort)
-                } else if ($deployAllOrNot -eq $true) {
+                } elseif ($deployAllOrNot -eq $true) {
                   . "$(Build.SourcesDirectory)/powershell-scripts/deployService.ps1"
                   upgradeHelmDeployment -imageName "usersubscription" -imageTag ${{ parameters.imageVersion }} -imageVersion ${{ parameters.imageVersion }} -servicePort 8090
                   . "$(Build.SourcesDirectory)/powershell-scripts/deployService.ps1"
@@ -97,7 +97,7 @@ stages:
                 [bool]$deployAllOrNot = ${{ parameters.deployAll }}
                 if($deployAllOrNot -eq $false) {
                   kubectl get pods -n $imageName
-                } else if ($deployAllOrNot -eq $true) {
+                } elseif ($deployAllOrNot -eq $true) {
                   kubectl get pods -n usersubscription
                   kubectl get pods -n videogameproducts
                   kubectl get pods -n videogamestore
@@ -124,6 +124,9 @@ stages:
             inputs:
               sourceFolder: '$(Build.SourcesDirectory)'
               contents: '**'
+
+
+
 
 
 
