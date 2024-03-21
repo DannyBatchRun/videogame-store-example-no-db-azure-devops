@@ -82,11 +82,11 @@ stages:
                   upgradeHelmDeployment -imageName "videogamestore" -imageTag ${{ parameters.imageVersion }} -imageVersion ${{ parameters.imageVersion }} -servicePort 8080
                 }
               displayName: 'Replace Images to Minikube'
-  - stage: ReplaceImageDeployment
-    displayName: Replace Image Deployment
+  - stage: CheckPods
+    displayName: Check Pods
     jobs:
-      - job: ReplaceImageDeployment
-        displayName: Replace Image Deployment
+      - job: CheckPods
+        displayName: Check Pods
         pool:
           name: Default
         steps:
@@ -124,6 +124,10 @@ stages:
             inputs:
               sourceFolder: '$(Build.SourcesDirectory)'
               contents: '**'
+
+
+
+
 
 
 
