@@ -56,7 +56,7 @@ stages:
               script: |
                 . "$(Build.SourcesDirectory)/powershell-scripts/deployService.ps1"
                 pullDockerImage -deployAll ${{ parameters.deployAll }} -imageName ${{ parameters.imageName }} -imageVersion ${{ parameters.imageVersion }}
-              displayName: 'Docker Pull Images'
+            displayName: 'Docker Pull Images'
   - stage: ReplaceImageDeployment
     displayName: Replace Image Deployment
     jobs:
@@ -81,7 +81,7 @@ stages:
                   . "$(Build.SourcesDirectory)/powershell-scripts/deployService.ps1"
                   upgradeHelmDeployment -imageName "videogamestore" -imageTag ${{ parameters.imageVersion }} -imageVersion ${{ parameters.imageVersion }} -servicePort 8080
                 }
-              displayName: 'Replace Images to Minikube'
+            displayName: 'Replace Images to Minikube'
   - stage: CheckPods
     displayName: Check Pods
     jobs:
@@ -102,10 +102,10 @@ stages:
                   kubectl get pods -n videogameproducts
                   kubectl get pods -n videogamestore
                 }
-              displayName: 'Show Pod Output'
+            displayName: 'Show Pod Output'
   - stage: Cleanup
     displayName: Cleanup Stage
-    dependsOn: Build_And_Push_Stage
+    dependsOn: CheckPods
     condition: always()
     jobs:
       - job: CleanupJob
@@ -124,10 +124,6 @@ stages:
             inputs:
               sourceFolder: '$(Build.SourcesDirectory)'
               contents: '**'
-
-
-
-
 
 
 
