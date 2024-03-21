@@ -27,29 +27,26 @@ stages:
               script: |
                 . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
                 createJarFile -Path "$(Build.SourcesDirectory)/store-usersubscription-example"
-            displayName: 'UserSubscription Jar Build'
-          - task: PowerShell@2
-            inputs:
-              targetType: 'inline'
-              script: |
                 . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
                 createJarFile -Path "$(Build.SourcesDirectory)/store-videogame-products-example"
-            displayName: 'VideogameProducts Jar Build'
-          - task: PowerShell@2
-            inputs:
-              targetType: 'inline'
-              script: |
                 . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
                 createJarFile -Path "$(Build.SourcesDirectory)/store-videogamestore-final-example"
-            displayName: 'VideogameStore Jar Build'
+            displayName: 'Build Maven Stage'
           - task: PublishPipelineArtifact@1
-            displayName: 'Publish Artifacts'
             inputs:
-              targetPath: |
-                '$(Build.SourcesDirectory)/store-usersubscription-example/target/usersubscription.jar'
-                '$(Build.SourcesDirectory)/store-videogame-products-example/target/videogamestore.jar'
-                '$(Build.SourcesDirectory)/store-videogamestore-final-example/target/videogamestorefinal.jar'
-              artifact: 'artifacts'
+              targetPath: '$(Build.SourcesDirectory)/store-usersubscription-example/target/usersubscription.jar'
+              artifact: 'usersubscription.jar'
+            displayName: 'Publish Artifact'
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: '$(Build.SourcesDirectory)/store-videogame-products-example/target/videogamestore.jar'
+              artifact: 'videogamestore.jar'
+            displayName: 'Publish Artifact'
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: '$(Build.SourcesDirectory)/store-videogamestore-final-example/target/videogamestorefinal.jar'
+              artifact: 'videogamestorefinal.jar'
+            displayName: 'Publish Artifact'
   - stage: Build_and_Push_Stage
     displayName: Docker Stage
     jobs:
@@ -58,9 +55,6 @@ stages:
         pool:
           name: Default
         steps:
-          - script: |
-              docker version
-            displayName: 'Check Docker version'
           - task: DownloadPipelineArtifact@2
             displayName: 'Download Artifacts'
             inputs:
@@ -81,23 +75,24 @@ stages:
               script: |
                 . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
                 buildAndPushOnDocker -Path "$(Build.SourcesDirectory)/store-usersubscription-example" -ImageName "usersubscription" -ImageTag ${{ parameters.imageTag }}
-            displayName: 'Build and Push UserSubscription'
-          - task: PowerShell@2
-            inputs:
-              targetType: 'inline'
-              script: |
                 . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
-                buildAndPushOnDocker -Path "$(Build.SourcesDirectory)/store-videogame-products-example" -ImageName "videogameproducts" -ImageTag ${{ parameters.imageTag }}
-            displayName: 'Build and Push Videogame Products'
-          - task: PowerShell@2
-            inputs:
-              targetType: 'inline'
-              script: |
+                buildAndPushOnDocker -Path "$(Build.SourcesDirectory)/store-videogame-products-example" -ImageName "videogameproducts" -ImageTag ${{ parameters.imageTag }}            
                 . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
                 buildAndPushOnDocker -Path "$(Build.SourcesDirectory)/store-videogamestore-final-example" -ImageName "videogamestore" -ImageTag ${{ parameters.imageTag }}
-            displayName: 'Build and Push Videogame Store'
+            displayName: 'Build and Push Stage'
           - task: Docker@2
             inputs:
               command: 'logout'
+post:
+  success:
+    steps:
+      - script: |
+          echo "Pipeline Success"
+        displayName: 'Print Success Message'
+  failure:
+    steps:
+      - script: |
+          echo "Pipeline Failure"
+        displayName: 'Print Failure Message'
 
 
