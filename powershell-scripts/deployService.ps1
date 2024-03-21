@@ -30,11 +30,11 @@ function pullDockerImage {
         [string]$imageName,
         [string]$imageVersion
     )
-    if ($deployAll -eq true) {
+    if ($deployAll -eq $true) {
         docker pull index.docker.io/dannybatchrun/usersubscription:$imageVersion
         docker pull index.docker.io/dannybatchrun/videogameproducts:$imageVersion
         docker pull index.docker.io/dannybatchrun/videogamestore:$imageVersion
-    } else if ($deployAll -eq false) {
+    } else if ($deployAll -eq $false) {
         docker pull index.docker.io/dannybatchrun/$imageName:$imageVersion
     }
 }
