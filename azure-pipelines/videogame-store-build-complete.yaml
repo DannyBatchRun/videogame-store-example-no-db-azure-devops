@@ -68,7 +68,7 @@ stages:
             inputs:
               containerRegistry: 'DockerHub'
               command: 'login'
-              displayName: 'Docker Login'
+            displayName: 'Docker Login'
           - task: PowerShell@2
             inputs:
               targetType: 'inline'
@@ -85,19 +85,22 @@ stages:
               command: 'logout'
   - stage: Cleanup
     displayName: Cleanup Stage
-    dependsOn: Build
+    dependsOn: Build_And_Push_Stage
     condition: always()
     jobs:
-      - job: CleanupJob
-        displayName: Cleanup Job
-        steps:
-          - script: |
-              echo "Pipeline ${{ if eq(variables['Build.Reason'], 'PullRequest') }}Success${{ else }}Failure${{ endif }}"
-            displayName: 'Print Pipeline Status'
-          - task: DeleteFiles@1
-            inputs:
-              sourceFolder: '$(Build.SourcesDirectory)'
-              contents: '**'
-              cleanTargetFolder: true
+    - job: CleanupJob
+      displayName: Cleanup Job
+      steps:
+      - script: |
+          if [ "$(isPullRequest)" = true ]; then
+              echo "Pipeline Success"
+          else
+              echo "Pipeline Failure"
+          fi
+        displayName: 'Print Pipeline Status'
+      - task: DeleteFiles@1
+        inputs:
+          sourceFolder: '$(Build.SourcesDirectory)'
+          contents: '**'
 
 
