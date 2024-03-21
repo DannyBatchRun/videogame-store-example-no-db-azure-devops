@@ -43,13 +43,20 @@ stages:
                 createJarFile -Path "$(Build.SourcesDirectory)/store-videogamestore-final-example"
             displayName: 'VideogameStore Jar Build'
           - task: PublishPipelineArtifact@1
-            displayName: 'Publish Artifacts'
             inputs:
-              targetPath: |
-                $(Build.SourcesDirectory)/store-usersubscription-example/target/usersubscription.jar
-                $(Build.SourcesDirectory)/store-videogame-products-example/target/videogamestore.jar
-                $(Build.SourcesDirectory)/store-videogamestore-final-example/target/videogamestorefinal.jar
-              artifact: 'artifacts'
+              targetPath: '$(Build.SourcesDirectory)/store-usersubscription-example/target/usersubscription.jar'
+              artifact: 'usersubscription.jar'
+            displayName: 'Publish Artifact UserSubscription'
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: '$(Build.SourcesDirectory)/store-videogame-products-example/target/videogamestore.jar'
+              artifact: 'videogamestore.jar'
+            displayName: 'Publish Artifact VideogameProducts'
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: '$(Build.SourcesDirectory)/store-videogamestore-final-example/target/videogamestorefinal.jar'
+              artifact: 'videogamestorefinal.jar'
+            displayName: 'Publish Artifact VideogameStore'
   - stage: Build_and_Push_Stage
     displayName: Docker Stage
     jobs:
@@ -99,3 +106,4 @@ stages:
           - task: Docker@2
             inputs:
               command: 'logout'
+
