@@ -1,0 +1,130 @@
+trigger:
+  batch: true
+  branches:
+    include:
+      - master
+
+resources:
+  - repo: self
+
+parameters:
+  - name: imageName
+    type: string
+    default: 'usersubscription'
+    values:
+      - 'usersubscription'
+      - 'videogameproducts'
+      - 'videogamestore'
+  - name: imageVersion
+    type: string
+    default: 'latest'
+  - name: deployAll
+    type: boolean
+    default: false
+
+stages:
+  - stage: SetupServicePort
+    displayName: Setup Service Port
+    jobs:
+      - job: SetupServicePortJob
+        displayName: Setup Service Port Job
+        pool:
+          name: Default
+        steps:
+          - script: |
+              [string]$serviceName = ${{ parameters.imageName }}
+              [bool]$deployAllOrNot = ${{ parameters.deployAll }}
+              [string]$servicePort
+              if($deployAllOrNot -eq true) {
+                Write-Host "You have selected Deploy All. Get Service port will not called."
+              } else if ($deployAllOrNot -eq false) {
+                . "$(Build.SourcesDirectory)/powershell-scripts/deployService.ps1"
+                $servicePort = getServicePort -microservice ${{ parameters.imageName }}
+              }
+            displayName: 'Setup Service Port'
+  - stage: DockerStage
+    displayName: Docker Stage
+    jobs:
+      - job: DockerStage
+        displayName: Docker Stage
+        pool:
+          name: Default
+        steps:
+          - task: PowerShell@2
+            inputs:
+              targetType: 'inline'
+              script: |
+                . "$(Build.SourcesDirectory)/powershell-scripts/deployService.ps1"
+                pullDockerImage -deployAll ${{ parameters.deployAll }} -imageName ${{ parameters.imageName }} -imageVersion ${{ parameters.imageVersion }}
+              displayName: 'Docker Pull Images'
+  - stage: ReplaceImageDeployment
+    displayName: Replace Image Deployment
+    jobs:
+      - job: ReplaceImageDeployment
+        displayName: Replace Image Deployment
+        pool:
+          name: Default
+        steps:
+          - task: PowerShell@2
+            inputs:
+              targetType: 'inline'
+              script: |
+                [bool]$deployAllOrNot = ${{ parameters.deployAll }}
+                if($deployAllOrNot -eq false) {
+                  . "$(Build.SourcesDirectory)/powershell-scripts/deployService.ps1"
+                  upgradeHelmDeployment -imageName ${{ parameters.imageName }} -imageVersion ${{ parameters.imageVersion }} -imageVersion ${{ parameters.imageVersion }} -servicePort $($servicePort)
+                } else if ($deployAllOrNot -eq true) {
+                  . "$(Build.SourcesDirectory)/powershell-scripts/deployService.ps1"
+                  upgradeHelmDeployment -imageName "usersubscription" -imageTag ${{ parameters.imageVersion }} -imageVersion ${{ parameters.imageVersion }} -servicePort 8090
+                  . "$(Build.SourcesDirectory)/powershell-scripts/deployService.ps1"
+                  upgradeHelmDeployment -imageName "videogameproducts" -imageTag ${{ parameters.imageVersion }} -imageVersion ${{ parameters.imageVersion }} -servicePort 8100
+                  . "$(Build.SourcesDirectory)/powershell-scripts/deployService.ps1"
+                  upgradeHelmDeployment -imageName "videogamestore" -imageTag ${{ parameters.imageVersion }} -imageVersion ${{ parameters.imageVersion }} -servicePort 8080
+                }
+              displayName: 'Replace Images to Minikube'
+  - stage: ReplaceImageDeployment
+    displayName: Replace Image Deployment
+    jobs:
+      - job: ReplaceImageDeployment
+        displayName: Replace Image Deployment
+        pool:
+          name: Default
+        steps:
+          - task: PowerShell@2
+            inputs:
+              targetType: 'inline'
+              script: |
+                [bool]$deployAllOrNot = ${{ parameters.deployAll }}
+                if($deployAllOrNot -eq false) {
+                  kubectl get pods -n $imageName
+                } else if ($deployAllOrNot -eq true) {
+                  kubectl get pods -n usersubscription
+                  kubectl get pods -n videogameproducts
+                  kubectl get pods -n videogamestore
+                }
+              displayName: 'Show Pod Output'
+  - stage: Cleanup
+    displayName: Cleanup Stage
+    dependsOn: Build_And_Push_Stage
+    condition: always()
+    jobs:
+      - job: CleanupJob
+        displayName: Cleanup Job
+        pool:
+          name: Default
+        steps:
+          - script: |
+              if [ "$(isPullRequest)" = true ]; then
+                  echo "Pipeline Success"
+              else
+                  echo "Pipeline Failure"
+              fi
+            displayName: 'Print Pipeline Status'
+          - task: DeleteFiles@1
+            inputs:
+              sourceFolder: '$(Build.SourcesDirectory)'
+              contents: '**'
+
+
+
+
