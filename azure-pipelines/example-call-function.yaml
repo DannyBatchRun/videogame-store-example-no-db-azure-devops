@@ -27,7 +27,7 @@ jobs:
       targetType: 'inline'
       script: |
         . "$(Build.SourcesDirectory)/powershell-scripts/example.ps1"
-        callVar -Path "$(Build.SourcesDirectory)/store-usersubscription-example" -ImageName "usersubscription" -ImageTag $env:IMAGE_TAG
+        callVar -Path "$(Build.SourcesDirectory)/store-usersubscription-example" -ImageName "usersubscription" -ImageTag "$env:IMAGE_TAG"
     displayName: 'Build and Push UserSubscription'
 
   - task: PowerShell@2
@@ -35,7 +35,7 @@ jobs:
       targetType: 'inline'
       script: |
         . "$(Build.SourcesDirectory)/powershell-scripts/example.ps1"
-        callVar -Path "$(Build.SourcesDirectory)/store-videogame-products-example" -ImageName "videogameproducts" -ImageTag $env:IMAGE_TAG
+        callVar -Path "$(Build.SourcesDirectory)/store-videogame-products-example" -ImageName "videogameproducts" -ImageTag "$env:IMAGE_TAG"
     displayName: 'Build and Push Videogame Products'
 
   - task: PowerShell@2
@@ -43,5 +43,5 @@ jobs:
       targetType: 'inline'
       script: |
         . "$(Build.SourcesDirectory)/powershell-scripts/example.ps1"
-        callVar -Path "$(Build.SourcesDirectory)/store-videogamestore-final-example" -ImageName "videogamestore" -ImageTag $env:IMAGE_TAG
+        callVar -Path "$(Build.SourcesDirectory)/store-videogamestore-final-example" -ImageName "videogamestore" -ImageTag "$env:IMAGE_TAG"
     displayName: 'Build and Push Videogame Store'
