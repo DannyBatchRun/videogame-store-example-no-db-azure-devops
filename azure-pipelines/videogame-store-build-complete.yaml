@@ -8,9 +8,6 @@ resources:
   - repo: self
 
 parameters:
-  - name: BRANCH_NAME
-    type: string
-    default: 'master'
   - name: imageTag
     type: string
     default: 'latest'
@@ -46,20 +43,13 @@ stages:
                 createJarFile -Path "$(Build.SourcesDirectory)/store-videogamestore-final-example"
             displayName: 'VideogameStore Jar Build'
           - task: PublishPipelineArtifact@1
+            displayName: 'Publish Artifacts'
             inputs:
-              targetPath: '$(Build.SourcesDirectory)/store-usersubscription-example/target/usersubscription.jar'
-              artifact: 'usersubscription.jar'
-            displayName: 'Publish Artifact UserSubscription'
-          - task: PublishPipelineArtifact@1
-            inputs:
-              targetPath: '$(Build.SourcesDirectory)/store-videogame-products-example/target/videogamestore.jar'
-              artifact: 'videogamestore.jar'
-            displayName: 'Publish Artifact VideogameProducts'
-          - task: PublishPipelineArtifact@1
-            inputs:
-              targetPath: '$(Build.SourcesDirectory)/store-videogamestore-final-example/target/videogamestorefinal.jar'
-              artifact: 'videogamestorefinal.jar'
-            displayName: 'Publish Artifact VideogameStore'
+              targetPath: |
+                $(Build.SourcesDirectory)/store-usersubscription-example/target/usersubscription.jar
+                $(Build.SourcesDirectory)/store-videogame-products-example/target/videogamestore.jar
+                $(Build.SourcesDirectory)/store-videogamestore-final-example/target/videogamestorefinal.jar
+              artifact: 'artifacts'
   - stage: Build_and_Push_Stage
     displayName: Docker Stage
     jobs:
@@ -71,27 +61,15 @@ stages:
           - script: |
               docker version
             displayName: 'Check Docker version'
-          - task: DownloadBuildArtifacts@1
-            displayName: Download JAR UserSubscription
+          - task: DownloadPipelineArtifact@2
+            displayName: 'Download Artifacts'
             inputs:
               buildType: 'current'
-              downloadType: 'single'
-              artifactName: 'usersubscription.jar'
-              downloadPath: '$(Build.SourcesDirectory)/store-usersubscription-example/target/'
-          - task: DownloadBuildArtifacts@1
-            displayName: Download JAR VideogameProducts
-            inputs:
-              buildType: 'current'
-              downloadType: 'single'
-              artifactName: 'videogamestore.jar'
-              downloadPath: '$(Build.SourcesDirectory)/store-videogame-products-example/target/'
-          - task: DownloadBuildArtifacts@1
-            displayName: Download JAR VideogameStore
-            inputs:
-              buildType: 'current'
-              downloadType: 'single'
-              artifactName: 'videogamestorefinal.jar'
-              downloadPath: '$(Build.SourcesDirectory)/store-videogamestore-final-example/target/'
+              downloadPath: '$(Build.SourcesDirectory)'
+              itemPattern: |
+                **/store-usersubscription-example/target/usersubscription.jar
+                **/store-videogame-products-example/target/videogamestore.jar
+                **/store-videogamestore-final-example/target/videogamestorefinal.jar'
           - task: Docker@2
             inputs:
               containerRegistry: 'DockerHub'
@@ -121,12 +99,3 @@ stages:
           - task: Docker@2
             inputs:
               command: 'logout'
-
-
-
-
-
-
-
-
-
