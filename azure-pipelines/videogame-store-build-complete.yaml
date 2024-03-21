@@ -46,9 +46,9 @@ stages:
             displayName: 'Publish Artifacts'
             inputs:
               targetPath: |
-                $(Build.SourcesDirectory)/store-usersubscription-example/target/usersubscription.jar
-                $(Build.SourcesDirectory)/store-videogame-products-example/target/videogamestore.jar
-                $(Build.SourcesDirectory)/store-videogamestore-final-example/target/videogamestorefinal.jar
+                store-usersubscription-example/target/usersubscription.jar
+                store-videogame-products-example/target/videogamestore.jar
+                store-videogamestore-final-example/target/videogamestorefinal.jar
               artifact: 'artifacts'
   - stage: Build_and_Push_Stage
     displayName: Docker Stage
