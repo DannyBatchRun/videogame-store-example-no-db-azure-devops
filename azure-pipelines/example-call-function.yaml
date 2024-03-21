@@ -1,0 +1,47 @@
+trigger:
+  batch: true
+  branches:
+    include:
+      - master
+
+resources:
+  - repo: self
+
+parameters:
+  - name: BRANCH_NAME
+    type: string
+    default: 'master'
+  - name: IMAGE_TAG
+    type: string
+    default: 'latest'
+
+jobs:
+- job: BuildAndPush
+  displayName: 'Build and Push Docker Images'
+  pool:
+    vmImage: 'ubuntu-latest'
+
+  steps:
+  - task: PowerShell@2
+    inputs:
+      targetType: 'inline'
+      script: |
+        . "$(Build.SourcesDirectory)/powershell-scripts/example.ps1"
+        callVar -Path "$(Build.SourcesDirectory)/store-usersubscription-example" -ImageName "usersubscription" -ImageTag $env:IMAGE_TAG
+    displayName: 'Build and Push UserSubscription'
+
+  - task: PowerShell@2
+    inputs:
+      targetType: 'inline'
+      script: |
+        . "$(Build.SourcesDirectory)/powershell-scripts/example.ps1"
+        callVar -Path "$(Build.SourcesDirectory)/store-videogame-products-example" -ImageName "videogameproducts" -ImageTag $env:IMAGE_TAG
+    displayName: 'Build and Push Videogame Products'
+
+  - task: PowerShell@2
+    inputs:
+      targetType: 'inline'
+      script: |
+        . "$(Build.SourcesDirectory)/powershell-scripts/example.ps1"
+        callVar -Path "$(Build.SourcesDirectory)/store-videogamestore-final-example" -ImageName "videogamestore" -ImageTag $env:IMAGE_TAG
+    displayName: 'Build and Push Videogame Store'
