@@ -31,7 +31,7 @@ function buildAndPushOnDocker {
     try {
         Set-Location $Path
         docker buildx build . -t $ImageName
-        $repositoryName = "dannybatchrun/$ImageName".ToLower()
+        [string]$repositoryName = "dannybatchrun/$ImageName".ToLower()
 
         # Debugging output
         Write-Host "Repository Name: $repositoryName"
@@ -44,6 +44,18 @@ function buildAndPushOnDocker {
         Write-Host "Error occurred: $_"
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
