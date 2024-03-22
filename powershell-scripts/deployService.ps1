@@ -48,6 +48,7 @@ function upgradeHelmDeployment {
     $chartContent | Set-Content Chart.yaml
     helm package .
     kubectl scale --replicas=0 "deployment/${imageName}" -n "${imageName}"
+    Write-Host "**** Helm Upgrade Command: helm upgrade "${imageName}" . --set "image.repository=index.docker.io/dannybatchrun/${imageName},image.tag=${imageTag},image.pullPolicy=Always,service.port=${servicePort},livenessProbe.httpGet.path=/health,livenessProbe.httpGet.port=${servicePort},service.type=NodePort" -n "${imageName}" ****"
     helm upgrade "${imageName}" . --set "image.repository=index.docker.io/dannybatchrun/${imageName},image.tag=${imageTag},image.pullPolicy=Always,service.port=${servicePort},livenessProbe.httpGet.path=/health,livenessProbe.httpGet.port=${servicePort},service.type=NodePort" -n "${imageName}"
     kubectl scale --replicas=1 "deployment/${imageName}" -n "${imageName}"
 }
