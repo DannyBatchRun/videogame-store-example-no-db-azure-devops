@@ -40,8 +40,14 @@ stages:
               } elseif ($deployAllOrNot -eq $false) {
                 . "$(Build.SourcesDirectory)/powershell-scripts/deployService.ps1"
                 $servicePort = getServicePort -microservice "${{ parameters.imageName }}"
+                $servicePort | Out-File "$(Build.SourcesDirectory)/servicePort.txt"
               }
             displayName: 'Setup Service Port'
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: '$(Build.SourcesDirectory)/servicePort.txt'
+              artifact: 'servicePort.txt'
+            displayName: 'Publish Artifact ServicePort'
   - stage: DockerStage
     displayName: Docker Stage
     jobs:
@@ -65,14 +71,22 @@ stages:
         pool:
           name: Default
         steps:
+          - task: DownloadBuildArtifacts@1
+            displayName: Download Artifact TXT ServicePort
+            inputs:
+              buildType: 'current'
+              downloadType: 'single'
+              artifactName: 'servicePort.txt'
+              downloadPath: '$(Build.SourcesDirectory)'
           - task: PowerShell@2
             inputs:
               targetType: 'inline'
               script: |
                 [bool]$deployAllOrNot = $${{ parameters.deployAll }}
+                [string]$servicePortDeploy = Get-Content "$(Build.SourcesDirectory)/servicePort.txt"
                 if($deployAllOrNot -eq $false) {
                   . "$(Build.SourcesDirectory)/powershell-scripts/deployService.ps1"
-                  upgradeHelmDeployment -imageName "${{ parameters.imageName }}" -imageTag "${{ parameters.imageVersion }}" -servicePort "$($servicePort)"
+                  upgradeHelmDeployment -imageName "${{ parameters.imageName }}" -imageTag "${{ parameters.imageVersion }}" -servicePort "$servicePortDeploy"
                 } elseif ($deployAllOrNot -eq $true) {
                   . "$(Build.SourcesDirectory)/powershell-scripts/deployService.ps1"
                   upgradeHelmDeployment -imageName "usersubscription" -imageTag ${{ parameters.imageVersion }} -imageVersion ${{ parameters.imageVersion }} -servicePort 8090
@@ -125,11 +139,4 @@ stages:
             inputs:
               sourceFolder: '$(Build.SourcesDirectory)'
               contents: '**'
-
-
-
-
-
-
-
 
