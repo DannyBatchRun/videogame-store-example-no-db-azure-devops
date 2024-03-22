@@ -20,7 +20,7 @@ parameters:
     default: 'latest'
   - name: deployAll
     type: boolean
-    default: false
+    default: $false
 
 stages:
   - stage: SetupServicePort
@@ -39,7 +39,7 @@ stages:
                 Write-Host "You have selected Deploy All. Get Service port will not called."
               } elseif ($deployAllOrNot -eq $false) {
                 . "$(Build.SourcesDirectory)/powershell-scripts/deployService.ps1"
-                $servicePort = getServicePort -microservice ${{ parameters.imageName }}
+                $servicePort = getServicePort -microservice "${{ parameters.imageName }}"
               }
             displayName: 'Setup Service Port'
   - stage: DockerStage
@@ -55,7 +55,7 @@ stages:
               targetType: 'inline'
               script: |
                 . "$(Build.SourcesDirectory)/powershell-scripts/deployService.ps1"
-                pullDockerImage -deployAll ${{ parameters.deployAll }} -imageName "${{ parameters.imageName }}" -imageVersion "${{ parameters.imageVersion }}"
+                pullDockerImage -deployAll $${{ parameters.deployAll }} -imageName "${{ parameters.imageName }}" -imageVersion "${{ parameters.imageVersion }}"
             displayName: 'Docker Pull Images'
   - stage: ReplaceImageDeployment
     displayName: Replace Image Deployment
@@ -124,6 +124,10 @@ stages:
             inputs:
               sourceFolder: '$(Build.SourcesDirectory)'
               contents: '**'
+
+
+
+
 
 
 
