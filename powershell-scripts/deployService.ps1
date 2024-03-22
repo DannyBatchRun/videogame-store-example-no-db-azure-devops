@@ -22,13 +22,13 @@ function pullDockerImage {
         [string]$imageName,
         [string]$imageVersion
     )
-    Write-Host $imageName
     if ($deployAll -eq $true) {
         docker pull --% index.docker.io/dannybatchrun/usersubscription:$imageVersion
         docker pull --% index.docker.io/dannybatchrun/videogameproducts:$imageVersion
         docker pull --% index.docker.io/dannybatchrun/videogamestore:$imageVersion
     } elseif ($deployAll -eq $false) {
-        docker pull --% index.docker.io/dannybatchrun/$imageName:$imageVersion
+        [string]$repositoryName = "index.docker.io/dannybatchrun/$(imageName):$(imageVersion)".ToLower()
+        docker pull --% $repositoryName
     }
 }
 
