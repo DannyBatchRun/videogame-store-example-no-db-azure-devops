@@ -95,8 +95,9 @@ stages:
               targetType: 'inline'
               script: |
                 [bool]$deployAllOrNot = $${{ parameters.deployAll }}
+                [string]$serviceName = ${{ parameters.imageName }}
                 if($deployAllOrNot -eq $false) {
-                  kubectl get pods -n $imageName
+                  kubectl get pods -n $serviceName
                 } elseif ($deployAllOrNot -eq $true) {
                   kubectl get pods -n usersubscription
                   kubectl get pods -n videogameproducts
@@ -124,6 +125,9 @@ stages:
             inputs:
               sourceFolder: '$(Build.SourcesDirectory)'
               contents: '**'
+
+
+
 
 
 
