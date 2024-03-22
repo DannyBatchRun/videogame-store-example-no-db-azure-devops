@@ -22,15 +22,18 @@ function pullDockerImage {
         [string]$imageName,
         [string]$imageVersion
     )
+
     if ($deployAll -eq $true) {
         docker pull --% index.docker.io/dannybatchrun/usersubscription:$imageVersion
         docker pull --% index.docker.io/dannybatchrun/videogameproducts:$imageVersion
         docker pull --% index.docker.io/dannybatchrun/videogamestore:$imageVersion
     } elseif ($deployAll -eq $false) {
-        [string]$repositoryName = "index.docker.io/dannybatchrun/$(imageName):$(imageVersion)".ToLower()
-        docker pull --% $repositoryName
+        [string]$repositoryName = "dannybatchrun/$ImageName".ToLower()
+        [string]$taggedImage = "${repositoryName}:${imageVersion}"
+        docker pull --% $taggedImage
     }
 }
+
 
 function upgradeHelmDeployment {
     param(
