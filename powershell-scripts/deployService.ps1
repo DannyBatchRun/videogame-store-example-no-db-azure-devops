@@ -40,14 +40,15 @@ function upgradeHelmDeployment {
         [string]$servicePort
     )
     [string]$chartVersion = $imageTag
-    $chartVersion = $chartVersion -replace '[^\d.]', ''
-    Write-Host "**** Chart Version of Helm : $chartVersion ****"
+    $chartVersion = $chartVersion -replace '[^0-9.]', ''
+    Write-Host "**** Chart Version of Helm: $chartVersion ****"
     Set-Location "helm-integration/${imageName}"
     $chartContent = Get-Content Chart.yaml
-    $chartContent = $chartContent -replace '^version: 0.1.0', "version: '${chartVersion}'"
+    $chartContent = $chartContent -replace '^version:.*', "version: '$chartVersion'"
     $chartContent | Set-Content Chart.yaml
     helm package .
     kubectl scale --replicas=0 "deployment/${imageName}" -n "${imageName}"
     helm upgrade "${imageName}" . --set "image.repository=index.docker.io/dannybatchrun/${imageName},image.tag=${imageTag},image.pullPolicy=Always,service.port=${servicePort},livenessProbe.httpGet.path=/health,livenessProbe.httpGet.port=${servicePort},service.type=NodePort" -n "${imageName}"
     kubectl scale --replicas=1 "deployment/${imageName}" -n "${imageName}"
 }
+
