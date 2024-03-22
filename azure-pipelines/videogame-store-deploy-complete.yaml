@@ -72,7 +72,7 @@ stages:
                 [bool]$deployAllOrNot = $${{ parameters.deployAll }}
                 if($deployAllOrNot -eq $false) {
                   . "$(Build.SourcesDirectory)/powershell-scripts/deployService.ps1"
-                  upgradeHelmDeployment -imageName "${{ parameters.imageName }}" -imageVersion "${{ parameters.imageVersion }}" -imageVersion "${{ parameters.imageVersion }}" -servicePort "$($servicePort)"
+                  upgradeHelmDeployment -imageName "${{ parameters.imageName }}" -imageTag "${{ parameters.imageVersion }}" -servicePort "$($servicePort)"
                 } elseif ($deployAllOrNot -eq $true) {
                   . "$(Build.SourcesDirectory)/powershell-scripts/deployService.ps1"
                   upgradeHelmDeployment -imageName "usersubscription" -imageTag ${{ parameters.imageVersion }} -imageVersion ${{ parameters.imageVersion }} -servicePort 8090
@@ -125,8 +125,6 @@ stages:
             inputs:
               sourceFolder: '$(Build.SourcesDirectory)'
               contents: '**'
-
-
 
 
 
