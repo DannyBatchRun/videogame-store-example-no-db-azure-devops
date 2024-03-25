@@ -39,6 +39,7 @@ function upgradeHelmDeployment {
         [string]$imageTag,
         [string]$servicePort
     )
+
     $chartVersion = $imageTag -replace '[^0-9.]', ''
     Write-Host "**** Chart Version of Helm: $chartVersion ****"
     Set-Location "helm-integration/${imageName}"
@@ -47,11 +48,21 @@ function upgradeHelmDeployment {
     $chartContent | Set-Content Chart.yaml
     helm package .
     kubectl scale --replicas=0 "deployment/${imageName}" -n "${imageName}"
-    $helmUpgradeCommand = "helm upgrade ${imageName} . --set image.repository=index.docker.io/dannybatchrun/${imageName};image.tag=${imageTag};image.pullPolicy=Always;service.port=${servicePort};livenessProbe.httpGet.path=/health;livenessProbe.httpGet.port=${servicePort};service.type=NodePort -n ${imageName}"
-    Write-Host "**** Helm Upgrade Command: $helmUpgradeCommand ****"
-    & $helmUpgradeCommand
+    $helmUpgradeCommand = "helm"
+    $helmUpgradeArgs = @(
+        "upgrade",
+        $imageName,
+        ".",
+        "--set", "image.repository=index.docker.io/dannybatchrun/${imageName};image.tag=${imageTag};image.pullPolicy=Always;service.port=${servicePort};livenessProbe.httpGet.path=/health;livenessProbe.httpGet.port=${servicePort};service.type=NodePort",
+        "-n", $imageName
+    )
+    Write-Host "**** Helm Upgrade Command: $helmUpgradeCommand $helmUpgradeArgs ****"
+    Start-Process -FilePath $helmUpgradeCommand -ArgumentList $helmUpgradeArgs -NoNewWindow -Wait
+
     kubectl scale --replicas=1 "deployment/${imageName}" -n "${imageName}"
 }
+upgradeHelmDeployment -imageName "usersubscription" -imageTag "testazure2.0" -servicePort "8090"
+
 
 
 
