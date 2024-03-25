@@ -35,8 +35,6 @@ function pullDockerImage {
 
 function upgradeHelmDeployment {
     param(
-        [string]$releaseName,
-        [string]$chartPath,
         [string]$imageName,
         [string]$imageTag,
         [string]$servicePort
@@ -44,19 +42,19 @@ function upgradeHelmDeployment {
 
     $chartVersion = $imageTag -replace '[^0-9.]', ''
     Write-Host "**** Chart Version of Helm: $chartVersion ****"
-    $chartFilePath = "$chartPath/Chart.yaml"
-    (Get-Content $chartFilePath) -replace '^version:.*', "version: $chartVersion" | Set-Content $chartFilePath
-    $helmCommand = "helm upgrade $releaseName $chartPath"
-    $helmCommand += " --set image.repository=index.docker.io/dannybatchrun/$imageName"
-    $helmCommand += ",image.tag=$imageTag"
-    $helmCommand += ",image.pullPolicy=Always"
-    $helmCommand += ",service.port=$servicePort"
-    $helmCommand += ",livenessProbe.httpGet.path=/health"
-    $helmCommand += ",livenessProbe.httpGet.port=$servicePort"
-    $helmCommand += ",service.type=NodePort"
-    Write-Host "Executing Helm command: $helmCommand"
-    Invoke-Expression $helmCommand
+    Set-Location "helm-integration/${imageName}"
+    $chartContent = Get-Content Chart.yaml
+    $chartContent = ${chartContent} -replace '^version:.*', "version: ${chartVersion}"
+    $chartContent | Set-Content Chart.yaml
+    helm package .
+    kubectl scale --replicas=0 "deployment/${imageName}" -n "${imageName}"
+    $helmUpgradeCommand = "helm upgrade ${imageName} . --set image.repository=index.docker.io/dannybatchrun/${imageName};image.tag=${imageTag};image.pullPolicy=Always;service.port=${servicePort};livenessProbe.httpGet.path=/health;livenessProbe.httpGet.port=${servicePort};service.type=NodePort -n ${imageName}"
+    Write-Host "**** Helm Upgrade Command: $helmUpgradeCommand ****"
+    Invoke-Expression $helmUpgradeCommand
+    kubectl scale --replicas=1 "deployment/${imageName}" -n "${imageName}"
 }
+
+
 
 
 
