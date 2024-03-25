@@ -39,24 +39,32 @@ function upgradeHelmDeployment {
         [string]$imageTag,
         [string]$servicePort
     )
+
     $chartVersion = $imageTag -replace '[^0-9.]', ''
     Write-Host "**** Chart Version of Helm: $chartVersion ****"
     Set-Location "helm-integration/${imageName}"
     (Get-Content Chart.yaml) -replace '^version:.*', "version: $chartVersion" | Set-Content Chart.yaml
-    $helmArguments = @"
-image.repository=index.docker.io/dannybatchrun/${imageName},
-image.tag=${imageTag},
-image.pullPolicy=Always,
-service.port=${servicePort},
-livenessProbe.httpGet.path=/health,
-livenessProbe.httpGet.port=${servicePort},
-service.type=NodePort
-"@
+    $helmArguments = @{
+        "image.repository" = "index.docker.io/dannybatchrun/${imageName}"
+        "image.tag" = $imageTag
+        "image.pullPolicy" = "Always"
+        "service.port" = $servicePort
+        "livenessProbe.httpGet.path" = "/health"
+        "livenessProbe.httpGet.port" = $servicePort
+        "service.type" = "NodePort"
+    }
+
+    $helmArgsString = $helmArguments.GetEnumerator() | ForEach-Object { '--set ' + $_.Key + '=' + $_.Value } -join ' '
     helm package .
     kubectl scale --replicas=0 "deployment/${imageName}" -n "${imageName}"
-    helm upgrade "${imageName}" . --set "$helmArguments" -n "${imageName}"
+    helm upgrade "${imageName}" . $helmArgsString -n "${imageName}"
     kubectl scale --replicas=1 "deployment/${imageName}" -n "${imageName}"
 }
+
+
+
+
+
 
 
 
