@@ -55,10 +55,13 @@ function upgradeHelmDeployment {
         "livenessProbe.httpGet.port=${servicePort}",
         "service.type=NodePort"
     )
+    $helmArgsString = $helmArguments -join ","
     helm package .
     kubectl scale --replicas=0 "deployment/${imageName}" -n "${imageName}"
-    helm upgrade "${imageName}" . @("-n", "${imageName}", "--set", $helmArguments)
+    helm upgrade "${imageName}" . --set $helmArgsString -n "${imageName}"
     kubectl scale --replicas=1 "deployment/${imageName}" -n "${imageName}"
 }
+
+
 
 
