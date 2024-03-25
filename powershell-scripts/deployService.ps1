@@ -39,7 +39,6 @@ function upgradeHelmDeployment {
         [string]$imageTag,
         [string]$servicePort
     )
-
     $chartVersion = $imageTag -replace '[^0-9.]', ''
     Write-Host "**** Chart Version of Helm: $chartVersion ****"
     Set-Location "helm-integration/${imageName}"
@@ -53,23 +52,15 @@ function upgradeHelmDeployment {
         "livenessProbe.httpGet.port" = $servicePort
         "service.type" = "NodePort"
     }
-
-    $helmArgsString = $helmArguments.GetEnumerator() | ForEach-Object { '--set ' + $_.Key + '=' + $_.Value } -join ' '
+    $helmArgsArray = @()
+    foreach ($key in $helmArguments.Keys) {
+        $helmArgsArray += "--set $key=$($helmArguments[$key])"
+    }
+    $helmArgsString = $helmArgsArray -join ' '
     helm package .
     kubectl scale --replicas=0 "deployment/${imageName}" -n "${imageName}"
     helm upgrade "${imageName}" . $helmArgsString -n "${imageName}"
     kubectl scale --replicas=1 "deployment/${imageName}" -n "${imageName}"
 }
-
-
-
-
-
-
-
-
-
-
-
 
 
