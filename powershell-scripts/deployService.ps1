@@ -46,12 +46,12 @@ function upgradeHelmDeployment {
     $chartContent = Get-Content Chart.yaml
     $chartContent = ${chartContent} -replace '^version:.*', "version: ${chartVersion}"
     $chartContent | Set-Content Chart.yaml
-    $helmArguments = "image.repository=index.docker.io/dannybatchrun/${imageName}\,image.tag=${imageTag}\,image.pullPolicy=Always\,service.port=${servicePort}\,livenessProbe.httpGet.path=/health\,livenessProbe.httpGet.port=${servicePort}\,service.type=NodePort -n ${imageName}"
+    [string]$helmArguments = "image.repository=index.docker.io/dannybatchrun/${imageName}\,image.tag=${imageTag}\,image.pullPolicy=Always\,service.port=${servicePort}\,livenessProbe.httpGet.path=/health\,livenessProbe.httpGet.port=${servicePort}\,service.type=NodePort"
     helm package .
     kubectl scale --replicas=0 "deployment/${imageName}" -n "${imageName}"
-    Write-Host "**** Helm Upgrade Command: helm upgrade "${imageName}" . --set "image.repository=index.docker.io/dannybatchrun/${imageName},image.tag=${imageTag},image.pullPolicy=Always,service.port=${servicePort},livenessProbe.httpGet.path=/health,livenessProbe.httpGet.port=${servicePort},service.type=NodePort" -n "${imageName}" ****"
-    helm upgrade "${imageName}" . --set $helmArguments
+    helm upgrade "${imageName}" . --set $helmArguments -n "${imageName}" 
     kubectl scale --replicas=1 "deployment/${imageName}" -n "${imageName}"
 }
+
 
 
