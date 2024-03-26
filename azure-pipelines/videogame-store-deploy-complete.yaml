@@ -81,10 +81,10 @@ stages:
               script: |
                 if ("${{ parameters.deployAll }}" -eq "false") {
                   Write-Host "Deploy all is set to false. Proceeding to download number of servicePort."
-                  Write-Output "##vso[task.setvariable variable=deployAllFlag]true"
+                  Write-Output "##vso[task.setvariable variable=deployAllFlag]false"
                 } elseif ("${{ parameters.deployAll }}" -eq "true") {
                   Write-Host "Deploy all is set true. Skipping download not required for servicePort."
-                  Write-Output "##vso[task.setvariable variable=deployAllFlag]false"
+                  Write-Output "##vso[task.setvariable variable=deployAllFlag]true"
                 }
           - task: DownloadBuildArtifacts@1
             condition: eq(variables['deployAllFlag'], 'false')
@@ -156,6 +156,10 @@ stages:
             inputs:
               sourceFolder: '$(Build.SourcesDirectory)'
               contents: '**'
+
+
+
+
 
 
 
