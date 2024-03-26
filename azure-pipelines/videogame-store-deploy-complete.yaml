@@ -85,8 +85,8 @@ stages:
               targetType: 'inline'
               script: |
                 [bool]$deployAllOrNot = $${{ parameters.deployAll }}
-                [string]$servicePortDeploy = Get-Content "$(Build.SourcesDirectory)/servicePort.txt"
                 if($deployAllOrNot -eq $false) {
+                  [string]$servicePortDeploy = Get-Content "$(Build.SourcesDirectory)/servicePort.txt"
                   . "$(Build.SourcesDirectory)/powershell-scripts/deployService.ps1"
                   upgradeHelmDeployment -imageName "${{ parameters.imageName }}" -imageTag "${{ parameters.imageVersion }}" -servicePort "$servicePortDeploy"
                 } elseif ($deployAllOrNot -eq $true) {
@@ -141,6 +141,8 @@ stages:
             inputs:
               sourceFolder: '$(Build.SourcesDirectory)'
               contents: '**'
+
+
 
 
 
