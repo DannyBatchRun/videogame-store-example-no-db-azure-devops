@@ -39,6 +39,8 @@ function upgradeHelmDeployment {
         [string]$imageTag,
         [string]$servicePort
     )
+
+    $currentLocation = Get-Location
     $imageName = $imageName.Trim()
     $imageTag = $imageTag.Trim()
     $servicePort = $servicePort.Trim()
@@ -55,13 +57,8 @@ function upgradeHelmDeployment {
     $helmUpgradeCommand = "helm upgrade $imageName . --set ""image.repository=index.docker.io/dannybatchrun/$imageName,image.tag=$imageTag,image.pullPolicy=Always,service.port=$servicePort,livenessProbe.httpGet.path=/health,livenessProbe.httpGet.port=$servicePort,service.type=NodePort"" -n $imageName"
     Invoke-Expression $helmUpgradeCommand
     kubectl scale --replicas=1 "deployment/${imageName}" -n "${imageName}"
+    Set-Location $currentLocation
 }
-
-
-
-
-
-
 
 
 
