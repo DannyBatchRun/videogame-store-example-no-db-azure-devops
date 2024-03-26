@@ -39,7 +39,9 @@ function upgradeHelmDeployment {
         [string]$imageTag,
         [string]$servicePort
     )
-
+    $imageName = $imageName.Trim()
+    $imageTag = $imageTag.Trim()
+    $servicePort = $servicePort.Trim()
     $chartVersion = $imageTag -replace '[^0-9.]', ''
     Write-Host "**** Chart Version of Helm: $chartVersion ****"
     Set-Location "helm-integration/${imageName}"
@@ -53,6 +55,8 @@ function upgradeHelmDeployment {
     Invoke-Expression $helmUpgradeCommand
     kubectl scale --replicas=1 "deployment/${imageName}" -n "${imageName}"
 }
+
+
 
 
 
