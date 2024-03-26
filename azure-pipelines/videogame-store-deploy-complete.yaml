@@ -42,7 +42,8 @@ stages:
                 $servicePort = getServicePort -microservice "${{ parameters.imageName }}"
                 $servicePort | Out-File "$(Build.SourcesDirectory)/servicePort.txt"
               }
-            displayName: 'Setup Service Port'
+            displayName:
+          - ${{ if eq(parameters.deployAll, 'false') }}:
           - task: PublishPipelineArtifact@1
             inputs:
               targetPath: '$(Build.SourcesDirectory)/servicePort.txt'
@@ -71,8 +72,9 @@ stages:
         pool:
           name: Default
         steps:
+          - ${{ if eq(parameters.deployAll, 'false') }}:
           - task: DownloadBuildArtifacts@1
-            displayName: Download Artifact TXT ServicePort
+            displayName: Download Artifact ServicePort
             inputs:
               buildType: 'current'
               downloadType: 'single'
@@ -139,4 +141,7 @@ stages:
             inputs:
               sourceFolder: '$(Build.SourcesDirectory)'
               contents: '**'
+
+
+
 
