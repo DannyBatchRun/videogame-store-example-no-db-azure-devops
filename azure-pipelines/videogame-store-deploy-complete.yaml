@@ -74,6 +74,18 @@ stages:
         pool:
           name: Default
         steps:
+          - task: PowerShell@2
+            displayName: Check deployAll Parameter
+            inputs:
+              targetType: 'inline'
+              script: |
+                if ("$(deployAll)" -eq "false") {
+                  Write-Host "Deploy all is set to false. Proceeding to download number of servicePort."
+                  Write-Output "##vso[task.setvariable variable=deployAllFlag]true"
+                } else {
+                  Write-Host "Deploy all is set true. Skipping download not required for servicePort."
+                  Write-Output "##vso[task.setvariable variable=deployAllFlag]false"
+                }
           - task: DownloadBuildArtifacts@1
             condition: eq(variables['deployAllFlag'], 'false')
             displayName: Download Artifact ServicePort
@@ -144,13 +156,6 @@ stages:
             inputs:
               sourceFolder: '$(Build.SourcesDirectory)'
               contents: '**'
-
-
-
-
-
-
-
 
 
 
