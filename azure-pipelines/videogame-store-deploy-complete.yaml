@@ -43,8 +43,8 @@ stages:
                 $servicePort | Out-File "$(Build.SourcesDirectory)/servicePort.txt"
               }
             displayName:
-          - ${{ if eq(parameters.deployAll, 'false') }}:
           - task: PublishPipelineArtifact@1
+            ${{ if eq(parameters.deployAll, 'false') }}:
             inputs:
               targetPath: '$(Build.SourcesDirectory)/servicePort.txt'
               artifact: 'servicePort.txt'
@@ -72,9 +72,9 @@ stages:
         pool:
           name: Default
         steps:
-          - ${{ if eq(parameters.deployAll, 'false') }}:
           - task: DownloadBuildArtifacts@1
             displayName: Download Artifact ServicePort
+            ${{ if eq(parameters.deployAll, 'false') }}:
             inputs:
               buildType: 'current'
               downloadType: 'single'
@@ -141,6 +141,10 @@ stages:
             inputs:
               sourceFolder: '$(Build.SourcesDirectory)'
               contents: '**'
+
+
+
+
 
 
 
