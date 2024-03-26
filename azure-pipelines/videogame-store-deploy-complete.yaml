@@ -44,7 +44,7 @@ stages:
               }
             displayName: Setup Service Port Job
           - task: PublishPipelineArtifact@1
-            condition: ne(variables['parameters.deployAll'], 'true')
+            condition: eq(variables['{{ parameters.deployAll }}'], 'false')
             inputs:
               targetPath: '$(Build.SourcesDirectory)/servicePort.txt'
               artifact: 'servicePort.txt'
@@ -73,7 +73,7 @@ stages:
           name: Default
         steps:
           - task: DownloadBuildArtifacts@1
-            condition: ne(variables['parameters.deployAll'], 'true')
+            condition: eq(variables['{{ parameters.deployAll }}'], 'false')
             displayName: Download Artifact ServicePort
             inputs:
               buildType: 'current'
