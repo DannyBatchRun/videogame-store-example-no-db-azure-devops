@@ -44,7 +44,7 @@ stages:
               }
             displayName: Setup Service Port Job
           - task: PublishPipelineArtifact@1
-            condition: eq(variables['{{ parameters.deployAll }}'], 'false')
+            condition: eq(variables['deployAllParam'], 'false')
             inputs:
               targetPath: '$(Build.SourcesDirectory)/servicePort.txt'
               artifact: 'servicePort.txt'
@@ -73,7 +73,7 @@ stages:
           name: Default
         steps:
           - task: DownloadBuildArtifacts@1
-            condition: eq(variables['parameters.deployAll'], 'false')
+            condition: eq(variables['deployAllParam'], 'false')
             displayName: Download Artifact ServicePort
             inputs:
               buildType: 'current'
