@@ -44,7 +44,7 @@ stages:
               }
             displayName:
           - task: PublishPipelineArtifact@1
-            ${{ if eq(parameters.deployAll, 'false') }}:
+            condition: eq(variables['deployAll'], 'false')
             inputs:
               targetPath: '$(Build.SourcesDirectory)/servicePort.txt'
               artifact: 'servicePort.txt'
@@ -73,8 +73,8 @@ stages:
           name: Default
         steps:
           - task: DownloadBuildArtifacts@1
+            condition: eq(variables['deployAll'], 'false')
             displayName: Download Artifact ServicePort
-            ${{ if eq(parameters.deployAll, 'false') }}:
             inputs:
               buildType: 'current'
               downloadType: 'single'
@@ -141,6 +141,10 @@ stages:
             inputs:
               sourceFolder: '$(Build.SourcesDirectory)'
               contents: '**'
+
+
+
+
 
 
 
