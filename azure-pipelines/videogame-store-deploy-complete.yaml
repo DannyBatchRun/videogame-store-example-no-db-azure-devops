@@ -73,7 +73,7 @@ stages:
           name: Default
         steps:
           - task: DownloadBuildArtifacts@1
-            condition: eq(variables['{{ parameters.deployAll }}'], 'false')
+            condition: eq(variables['parameters.deployAll'], 'false')
             displayName: Download Artifact ServicePort
             inputs:
               buildType: 'current'
@@ -85,17 +85,18 @@ stages:
               targetType: 'inline'
               script: |
                 [bool]$deployAllOrNot = $${{ parameters.deployAll }}
-                if($deployAllOrNot -eq $false) {
+                if ($deployAllOrNot -eq $false) {
                   [string]$servicePortDeploy = Get-Content "$(Build.SourcesDirectory)/servicePort.txt"
                   . "$(Build.SourcesDirectory)/powershell-scripts/deployService.ps1"
                   upgradeHelmDeployment -imageName "${{ parameters.imageName }}" -imageTag "${{ parameters.imageVersion }}" -servicePort "$servicePortDeploy"
-                } elseif ($deployAllOrNot -eq $true) {
+                }
+                elseif ($deployAllOrNot -eq $true) {
                   . "$(Build.SourcesDirectory)/powershell-scripts/deployService.ps1"
-                  upgradeHelmDeployment -imageName "usersubscription" -imageTag ${{ parameters.imageVersion }} -servicePort 8090
+                  upgradeHelmDeployment -imageName "usersubscription" -imageTag "${{ parameters.imageVersion }}" -servicePort "8090"
                   . "$(Build.SourcesDirectory)/powershell-scripts/deployService.ps1"
-                  upgradeHelmDeployment -imageName "videogameproducts" -imageTag ${{ parameters.imageVersion }} -servicePort 8100
+                  upgradeHelmDeployment -imageName "videogameproducts" -imageTag "${{ parameters.imageVersion }}" -servicePort "8100"
                   . "$(Build.SourcesDirectory)/powershell-scripts/deployService.ps1"
-                  upgradeHelmDeployment -imageName "videogamestore" -imageTag ${{ parameters.imageVersion }} -servicePort 8080
+                  upgradeHelmDeployment -imageName "videogamestore" -imageTag "${{ parameters.imageVersion }}" -servicePort "8080"
                 }
             displayName: 'Replace Images to Minikube'
   - stage: CheckPods
@@ -141,27 +142,6 @@ stages:
             inputs:
               sourceFolder: '$(Build.SourcesDirectory)'
               contents: '**'
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
