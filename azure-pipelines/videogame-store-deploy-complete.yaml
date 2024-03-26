@@ -37,14 +37,16 @@ stages:
               [string]$servicePort
               if($deployAllOrNot -eq $true) {
                 Write-Host "You have selected Deploy All. Get Service port will not called."
+                Write-Output "##vso[task.setvariable variable=deployAllFlag]true"
               } elseif ($deployAllOrNot -eq $false) {
                 . "$(Build.SourcesDirectory)/powershell-scripts/deployService.ps1"
                 $servicePort = getServicePort -microservice "${{ parameters.imageName }}"
                 $servicePort | Out-File "$(Build.SourcesDirectory)/servicePort.txt"
+                Write-Output "##vso[task.setvariable variable=deployAllFlag]false"
               }
             displayName: Setup Service Port Job
           - task: PublishPipelineArtifact@1
-            condition: eq(variables['deployAllParam'], 'false')
+            condition: eq(variables['deployAllFlag'], 'true')
             inputs:
               targetPath: '$(Build.SourcesDirectory)/servicePort.txt'
               artifact: 'servicePort.txt'
@@ -73,7 +75,7 @@ stages:
           name: Default
         steps:
           - task: DownloadBuildArtifacts@1
-            condition: eq(variables['deployAllParam'], 'false')
+            condition: eq(variables['deployAllFlag'], 'true')
             displayName: Download Artifact ServicePort
             inputs:
               buildType: 'current'
@@ -142,6 +144,9 @@ stages:
             inputs:
               sourceFolder: '$(Build.SourcesDirectory)'
               contents: '**'
+
+
+
 
 
 
