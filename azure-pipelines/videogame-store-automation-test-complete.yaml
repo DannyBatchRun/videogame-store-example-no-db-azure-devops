@@ -30,16 +30,18 @@ stages:
               [bool]$subscriptionTest = $${{ parameters.USERSUBSCRIPTION_TEST }}
               [bool]$productsTest = $${{ parameters.VIDEOGAMEPRODUCTS_TEST }}
               [bool]$storeTest = $${{ parameters.VIDEOGAMESTORE_TEST }}
-              Write-Output "##vso[task.setvariable variable=subscriptionTestFlag]true"
-              Write-Output "##vso[task.setvariable variable=productsTestFlag]true"
-              Write-Output "##vso[task.setvariable variable=videogameTestFlag]true"
-              if($storeTest -eq $true -and ($subscriptionTest -eq $false -or $productsTest -eq $false)) {
-                Write-Host "You have selected Videogame Store but not the other two service. Forcing the other booleans to true, because is required to start application."
+              if ($storeTest -eq $true -and ($subscriptionTest -eq $false -or $productsTest -eq $false)) {
+                Write-Host "You have selected Videogame Store but not the other two services. Forcing the other booleans to true, because is required to start application."
                 Write-Output "##vso[task.setvariable variable=subscriptionTestFlag]true"
                 Write-Output "##vso[task.setvariable variable=productsTestFlag]true"
                 Write-Output "##vso[task.setvariable variable=videogameTestFlag]true"
                 return
-              } 
+              } elseif ($storeTest -eq $true -and $subscriptionTest -eq $true -and $productsTest -eq $true) {
+                Write-Output "##vso[task.setvariable variable=subscriptionTestFlag]true"
+                Write-Output "##vso[task.setvariable variable=productsTestFlag]true"
+                Write-Output "##vso[task.setvariable variable=videogameTestFlag]true"
+                return
+              }
               if($subscriptionTest -eq $true) {
                 Write-Output "##vso[task.setvariable variable=subscriptionTestFlag]true"
               }
@@ -52,6 +54,8 @@ stages:
             displayName: Check Boolean Parameters
   - stage: TestUserSubscription
     displayName: Test UserSubscription
+    dependsOn: CheckBooleanParameters
+    condition: eq(dependencies.CheckBooleanParameters.outputs['CheckBooleanParameters.CheckBooleanParameters.subscriptionTestFlag'], 'true')
     jobs:
       - job: TestUserSubscription
         displayName: Test UserSubscription
@@ -59,7 +63,6 @@ stages:
           name: Default
         steps:
           - task: PowerShell@2
-            condition: eq(variables['subscriptionTestFlag'], 'true')
             inputs:
               targetType: 'inline'
               script: |
@@ -78,6 +81,8 @@ stages:
             displayName: 'Test UserSubscription'
   - stage: TestVideogameProducts
     displayName: Test VideogameProducts
+    dependsOn: CheckBooleanParameters
+    condition: eq(dependencies.CheckBooleanParameters.outputs['CheckBooleanParameters.CheckBooleanParameters.productsTestFlag'], 'true')
     jobs:
       - job: TestVideogameProducts
         displayName: Test VideogameProducts
@@ -104,6 +109,8 @@ stages:
             displayName: 'Test VideogameProducts'
   - stage: TestVideogameStore
     displayName: Test VideogameStore
+    dependsOn: CheckBooleanParameters
+    condition: eq(dependencies.CheckBooleanParameters.outputs['CheckBooleanParameters.CheckBooleanParameters.videogameTestFlag'], 'true')
     jobs:
       - job: TestVideogameStore
         displayName: Test VideogameStore
