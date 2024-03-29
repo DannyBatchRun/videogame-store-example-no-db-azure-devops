@@ -22,17 +22,20 @@ function replaceEndpoints {
         [string]$testType,
         [string]$servicePort
     )
+    $apiEndpoint = & minikube service $microservice --url -n "${microservice}" | Select-Object -First 1
+    $apiEndpoint = $apiEndpoint.Trim()
     $currentLocation = Get-Location
-    Set-Location "$path/cucumber-auto/$testType/features/step_definitions"
+    Set-Location "${path}/cucumber-auto/${testType}/features/step_definitions"
     $fileContent = Get-Content 'stepdefs.js' -Raw
-    $replaced = $fileContent -replace "http://localhost:$servicePort", $apiEndpoint
+    $replaced = $fileContent -replace "http://localhost:${servicePort}", "${apiEndpoint}"
     Set-Content -Path 'stepdefs.js' -Value $replaced
     if($microservice -eq "videogamestore") {
+        Set-Location $currentLocation
         Set-Location "store-videogamestore-final-example/cucumber-auto/synchronize"
         $urlSubscription = & minikube service usersubscription --url -n usersubscription | Select-Object -First 1
         $urlVideogame = & minikube service videogameproducts --url -n videogameproducts | Select-Object -First 1
-        (Get-Content -Path "features\synchronize_all.feature") -replace "ENDPOINT_USERSUBSCRIPTION", $urlSubscription | Set-Content -Path "features\synchronize_all.feature"
-        (Get-Content -Path "features\synchronize_all.feature") -replace "ENDPOINT_VIDEOGAMEPRODUCTS", $urlVideogame | Set-Content -Path "features\synchronize_all.feature"
+        (Get-Content -Path "features/synchronize_all.feature") -replace "ENDPOINT_USERSUBSCRIPTION", "${urlSubscription}" | Set-Content -Path "features/synchronize_all.feature"
+        (Get-Content -Path "features/synchronize_all.feature") -replace "ENDPOINT_VIDEOGAMEPRODUCTS", "${urlVideogame}" | Set-Content -Path "features/synchronize_all.feature"
     }
     Set-Location $currentLocation
 }
@@ -93,17 +96,17 @@ function runTestCucumber {
         "videogameproducts" { "store-videogame-products-example" }
         "videogamestore" { "store-videogamestore-final-example" }
     }
-    Write-Host "**** RUNNING TEST '${microservice.ToUpper()}' : '${testType.ToUpper}'"
+    Write-Host "**** RUNNING TEST ${microservice.ToUpper()} : ${testType.ToUpper}"
     $currentLocation = Get-Location
     try {
-        Set-Location "'${path}'/cucumber-auto/'${testType}'"
+        Set-Location "${path}/cucumber-auto/${testType}"
         npm test
     }
     catch [Exception] {
         Write-Host "Error while executing script: $($_.Exception.Message)"
     }
     finally {
-        Write-Host "*** '${microservice.ToUpper()}' : '${testType.ToUpper()}' COMPLETED SUCCESSFULLY"
+        Write-Host "*** ${microservice.ToUpper()} : ${testType.ToUpper()} COMPLETED SUCCESSFULLY"
         Set-Location $currentLocation
     }
 }
