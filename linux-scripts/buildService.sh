@@ -33,3 +33,14 @@ use_ansible_vault() {
   set +x; echo "${password_encrypted}" > passwordFile || exit 1
   ansible-vault "${choice}" config.json --vault-password-file passwordFile && rm passwordFile || exit 1
 }
+
+if [ "$1" == "create_jar_file" ]; then
+  shift
+  create_jar_file "$@"
+elif [ "$1" == "build_and_push_on_docker" ]; then
+  shift
+  build_and_push_on_docker "$@"
+elif [ "$1" == "use_ansible_vault" ]; then
+  shift
+  use_ansible_vault "$@"
+fi

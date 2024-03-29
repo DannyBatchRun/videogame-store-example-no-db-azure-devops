@@ -31,9 +31,9 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
-                sh $(Build.SourcesDirectory)/linux-scripts/buildService.sh create_jar_file "$(Build.SourcesDirectory)/store-usersubscription-example"
-                sh $(Build.SourcesDirectory)/linux-scripts/buildService.sh create_jar_file "$(Build.SourcesDirectory)/store-videogame-products-example"
-                sh $(Build.SourcesDirectory)/linux-scripts/buildService.sh create_jar_file "$(Build.SourcesDirectory)/store-videogamestore-final-example"
+                sudo ./$(Build.SourcesDirectory)/linux-scripts/buildService.sh create_jar_file "$(Build.SourcesDirectory)/store-usersubscription-example"
+                sudo ./$(Build.SourcesDirectory)/linux-scripts/buildService.sh create_jar_file "$(Build.SourcesDirectory)/store-videogame-products-example"
+                sudo ./$(Build.SourcesDirectory)/linux-scripts/buildService.sh create_jar_file "$(Build.SourcesDirectory)/store-videogamestore-final-example"
             displayName: 'Build Maven Stage'
           - task: PublishPipelineArtifact@1
             inputs:
@@ -77,9 +77,9 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
-                sh $(Build.SourcesDirectory)/linux-scripts/buildService.sh build_and_push_on_docker "$(Build.SourcesDirectory)/store-usersubscription-example" "usersubscription" "${{ parameters.imageTag }}"
-                sh $(Build.SourcesDirectory)/linux-scripts/buildService.sh build_and_push_on_docker "$(Build.SourcesDirectory)/store-videogame-products-example" "videogameproducts" "${{ parameters.imageTag }}"
-                sh $(Build.SourcesDirectory)/linux-scripts/buildService.sh build_and_push_on_docker "$(Build.SourcesDirectory)/store-videogamestore-final-example" "videogamestore" "${{ parameters.imageTag }}"
+                sudo ./$(Build.SourcesDirectory)/linux-scripts/buildService.sh build_and_push_on_docker "$(Build.SourcesDirectory)/store-usersubscription-example" "usersubscription" "${{ parameters.imageTag }}"
+                sudo ./$(Build.SourcesDirectory)/linux-scripts/buildService.sh build_and_push_on_docker "$(Build.SourcesDirectory)/store-videogame-products-example" "videogameproducts" "${{ parameters.imageTag }}"
+                sudo ./$(Build.SourcesDirectory)/linux-scripts/buildService.sh build_and_push_on_docker "$(Build.SourcesDirectory)/store-videogamestore-final-example" "videogamestore" "${{ parameters.imageTag }}"
           - task: Docker@2
             inputs:
               command: 'logout'
@@ -105,6 +105,10 @@ stages:
             inputs:
               sourceFolder: '$(Build.SourcesDirectory)'
               contents: '**'
+
+
+
+
 
 
 
