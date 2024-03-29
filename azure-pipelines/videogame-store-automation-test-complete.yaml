@@ -1,0 +1,154 @@
+trigger:
+  batch: true
+  branches:
+    include:
+      - master
+
+resources:
+  - repo: self
+
+parameters:
+  - name: USERSUBSCRIPTION_TEST
+    type: boolean
+    default: false
+  - name: VIDEOGAMEPRODUCTS_TEST
+    type: boolean
+    default: false
+  - name: VIDEOGAMESTORE_TEST
+    type: boolean
+    default: false
+
+stages:
+  - stage: CheckBooleanParameters
+    displayName: Check Boolean Parameters
+    jobs:
+      - job: CheckBooleanParameters
+        displayName: Check Boolean Parameters
+        pool:
+          name: Default
+        steps:
+          - pwsh: |
+              [bool]$subscriptionTest = $${{ parameters.USERSUBSCRIPTION_TEST }}
+              [bool]$productsTest = $${{ parameters.VIDEOGAMEPRODUCTS_TEST }}
+              [bool]$storeTest = $${{ parameters.VIDEOGAMESTORE_TEST }}
+              if($storeTest -eq true -and ($subscriptionTest -eq $false -or $productsTest -eq $false)) {
+                Write-Host "You have selected Videogame Store but not the other two service. Forcing the other booleans to true, because is required to start application."
+                Write-Output "##vso[task.setvariable variable=subscriptionTestFlag]true"
+                Write-Output "##vso[task.setvariable variable=productsTestFlag]true"
+                Write-Output "##vso[task.setvariable variable=videogameTestFlag]true"
+                return
+              } 
+              if($subscriptionTest -eq $true) {
+                Write-Output "##vso[task.setvariable variable=subscriptionTestFlag]true"
+              }
+              if($productsTest -eq $true) {
+                Write-Output "##vso[task.setvariable variable=productsTestFlag]true"
+              }
+              npm version
+              Write-Host "**** Sleeping for Two Minutes *****"
+              Start-Sleep 120
+            displayName: Check Boolean Parameters
+  - stage: Test UserSubscription
+    displayName: Test UserSubscription
+    jobs:
+      - job: TestUserSubscription
+        displayName: Test UserSubscription
+        pool:
+          name: Default
+        steps:
+          - task: PowerShell@2
+            condition: eq(variables['subscriptionTestFlag'], 'true')
+            inputs:
+              targetType: 'inline'
+              script: |
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                prepareEndpoints -microservice "usersubscription"
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                installDependenciesNodeJs -microservice "usersubscription"
+                Write-Host "** ADDING FOUR USERS FOR A SUBSCRIPTION MONHLY ** SLEEP FOR 20 SECONDS"
+                Start-Sleep 20
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                runTestCucumber -microservice "usersubscription" -testType "postrequestmonthly"
+                Write-Host "** ADDING FOUR USERS FOR A SUBSCRIPTION ANNUAL ** SLEEP FOR 20 SECONDS"
+                Start-Sleep 20
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                runTestCucumber -microservice "usersubscription" -testType "getrequest"
+            displayName: 'Test UserSubscription'
+  - stage: Test VideogameProducts
+    displayName: Test VideogameProducts
+    jobs:
+      - job: TestVideogameProducts
+        displayName: Test VideogameProducts
+        pool:
+          name: Default
+        steps:
+          - task: PowerShell@2
+            condition: eq(variables['productsTestFlag'], 'true')
+            inputs:
+              targetType: 'inline'
+              script: |
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                prepareEndpoints -microservice "videogameproducts"
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                installDependenciesNodeJs -microservice "videogameproducts"
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                runTestCucumber -microservice "videogameproducts" -testType "postrequest"
+                Write-Host "*** PRODUCT ID TO BE DELETED : 1 *** SLEEP FOR 20 SECONDS"
+                Start-Sleep 20
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                runTestCucumber -microservice "videogameproducts" -testType "deleterequest"
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                runTestCucumber -microservice "videogameproducts" -testType "getrequest"
+            displayName: 'Test VideogameProducts'
+  - stage: Test VideogameStore
+    displayName: Test VideogameStore
+    jobs:
+      - job: TestVideogameStore
+        displayName: Test VideogameStore
+        pool:
+          name: Default
+        steps:
+          - task: PowerShell@2
+            condition: eq(variables['videogameTestFlag'], 'true')
+            inputs:
+              targetType: 'inline'
+              script: |
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                prepareEndpoints -microservice "videogamestore"
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                installDependenciesNodeJs -microservice "videogamestore"
+                Write-Host "*** SYNCRONIZING DATABASES OF USERSUBSCRIPTION AND VIDEOGAMEPRODUCTS ***"
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                runTestCucumber -microservice "videogamestore" -testType "synchronize"
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                runTestCucumber -microservice "videogamestore" -testType "postrequest"
+                Write-Host "*** WAITING FOR 20 SECONDS AFTER SEND GETREQUEST TEST ***"
+                Start-Sleep 20
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                runTestCucumber -microservice "videogamestore" -testType "getrequest"
+            displayName: 'Test VideogameStore'
+  - stage: Cleanup
+    displayName: Cleanup Stage
+    dependsOn: CheckPods
+    condition: always()
+    jobs:
+      - job: CleanupJob
+        displayName: Cleanup Job
+        pool:
+          name: Default
+        steps:
+          - script: |
+              if [ "$(isPullRequest)" = true ]; then
+                  echo "Pipeline Success"
+              else
+                  echo "Pipeline Failure"
+              fi
+            displayName: 'Print Pipeline Status'
+          - task: DeleteFiles@1
+            inputs:
+              sourceFolder: '$(Build.SourcesDirectory)'
+              contents: '**'
+
+
+
+
