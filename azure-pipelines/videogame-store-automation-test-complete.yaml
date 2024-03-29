@@ -29,7 +29,7 @@ stages:
           - pwsh: |
               [bool]$subscriptionTest = $${{ parameters.USERSUBSCRIPTION_TEST }}
               [bool]$productsTest = $${{ parameters.VIDEOGAMEPRODUCTS_TEST }}
-              [bool]$storeTest = $${{ parameters.VIDEOGAMESTORE_TEST }}+
+              [bool]$storeTest = $${{ parameters.VIDEOGAMESTORE_TEST }}
               Write-Output "##vso[task.setvariable variable=subscriptionTestFlag]true"
               Write-Output "##vso[task.setvariable variable=productsTestFlag]true"
               Write-Output "##vso[task.setvariable variable=videogameTestFlag]true"
