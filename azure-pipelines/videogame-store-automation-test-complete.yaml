@@ -129,7 +129,7 @@ stages:
             displayName: 'Test VideogameStore'
   - stage: Cleanup
     displayName: Cleanup Stage
-    dependsOn: CheckPods
+    dependsOn: TestVideogameStore
     condition: always()
     jobs:
       - job: CleanupJob
@@ -148,6 +148,9 @@ stages:
             inputs:
               sourceFolder: '$(Build.SourcesDirectory)'
               contents: '**'
+
+
+
 
 
 
