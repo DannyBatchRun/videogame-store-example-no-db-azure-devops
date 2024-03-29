@@ -48,7 +48,7 @@ stages:
               Write-Host "**** Sleeping for Two Minutes *****"
               Start-Sleep 120
             displayName: Check Boolean Parameters
-  - stage: Test UserSubscription
+  - stage: TestUserSubscription
     displayName: Test UserSubscription
     jobs:
       - job: TestUserSubscription
@@ -74,7 +74,7 @@ stages:
                 . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
                 runTestCucumber -microservice "usersubscription" -testType "getrequest"
             displayName: 'Test UserSubscription'
-  - stage: Test VideogameProducts
+  - stage: TestVideogameProducts
     displayName: Test VideogameProducts
     jobs:
       - job: TestVideogameProducts
@@ -100,7 +100,7 @@ stages:
                 . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
                 runTestCucumber -microservice "videogameproducts" -testType "getrequest"
             displayName: 'Test VideogameProducts'
-  - stage: Test VideogameStore
+  - stage: TestVideogameStore
     displayName: Test VideogameStore
     jobs:
       - job: TestVideogameStore
@@ -148,6 +148,10 @@ stages:
             inputs:
               sourceFolder: '$(Build.SourcesDirectory)'
               contents: '**'
+
+
+
+
 
 
 
