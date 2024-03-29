@@ -57,6 +57,8 @@ stages:
                 . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
                 runTestCucumber -microservice "usersubscription" -testType "postrequestmonthly"
                 Write-Host "** ADDING FOUR USERS FOR A SUBSCRIPTION ANNUAL ** SLEEP FOR 20 SECONDS"
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                runTestCucumber -microservice "usersubscription" -testType "postrequestannual"
                 Start-Sleep 20
                 . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
                 runTestCucumber -microservice "usersubscription" -testType "getrequest"
