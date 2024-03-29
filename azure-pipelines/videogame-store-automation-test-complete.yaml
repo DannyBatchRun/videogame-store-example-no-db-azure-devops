@@ -31,7 +31,7 @@ stages:
               [bool]$subscriptionTest = $${{ parameters.USERSUBSCRIPTION_TEST }}
               [bool]$productsTest = $${{ parameters.VIDEOGAMEPRODUCTS_TEST }}
               [bool]$storeTest = $${{ parameters.VIDEOGAMESTORE_TEST }}
-              if($storeTest -eq true -and ($subscriptionTest -eq $false -or $productsTest -eq $false)) {
+              if($storeTest -eq $true -and ($subscriptionTest -eq $false -or $productsTest -eq $false)) {
                 Write-Host "You have selected Videogame Store but not the other two service. Forcing the other booleans to true, because is required to start application."
                 Write-Output "##vso[task.setvariable variable=subscriptionTestFlag]true"
                 Write-Output "##vso[task.setvariable variable=productsTestFlag]true"
@@ -148,6 +148,10 @@ stages:
             inputs:
               sourceFolder: '$(Build.SourcesDirectory)'
               contents: '**'
+
+
+
+
 
 
 
