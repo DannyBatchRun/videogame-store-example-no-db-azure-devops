@@ -11,7 +11,7 @@ function installIntoDirectory {
     $currentLocation = Get-Location
     Set-Location $path
     npm install --save @cucumber/cucumber axios pactum
-    Write-Host 'Dependencies installed for "${testType}"'
+    Write-Host "Dependencies installed for ${testType}"
     Set-Location $currentLocation
 }
 
@@ -96,7 +96,7 @@ function runTestCucumber {
         "videogameproducts" { "store-videogame-products-example" }
         "videogamestore" { "store-videogamestore-final-example" }
     }
-    Write-Host "**** RUNNING TEST ${microservice.ToUpper()} : ${testType.ToUpper}"
+    Write-Host "**** RUNNING TEST $($microservice.ToUpper()) : $($testType.ToUpper())"
     $currentLocation = Get-Location
     try {
         Set-Location "${path}/cucumber-auto/${testType}"
@@ -106,7 +106,7 @@ function runTestCucumber {
         Write-Host "Error while executing script: $($_.Exception.Message)"
     }
     finally {
-        Write-Host "*** ${microservice.ToUpper()} : ${testType.ToUpper()} COMPLETED SUCCESSFULLY"
+        Write-Host "*** $($microservice.ToUpper()) : $($testType.ToUpper()) COMPLETED SUCCESSFULLY"
         Set-Location $currentLocation
     }
 }
