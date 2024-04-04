@@ -77,9 +77,12 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
-                sudo ./linux-scripts/buildService.sh build_and_push_on_docker "$(Build.SourcesDirectory)/store-usersubscription-example" "usersubscription" "${{ parameters.imageTag }}"
-                sudo ./linux-scripts/buildService.sh build_and_push_on_docker "$(Build.SourcesDirectory)/store-videogame-products-example" "videogameproducts" "${{ parameters.imageTag }}"
-                sudo ./linux-scripts/buildService.sh build_and_push_on_docker "$(Build.SourcesDirectory)/store-videogamestore-final-example" "videogamestore" "${{ parameters.imageTag }}"
+                generatedPassword=$(shuf -i 0-999999 -n 1 | printf "%06d\n" $(cat))
+                sudo ./linux-scripts/buildService.sh use_ansible_vault "${generatedPassword}" "encrypt" "${{ parameters.imageTag }}"
+                sudo ./linux-scripts/buildService.sh build_and_push_on_docker "$(Build.SourcesDirectory)/store-usersubscription-example" "usersubscription" "${{ parameters.imageTag }}" "${generatedPassword}"
+                sudo ./linux-scripts/buildService.sh build_and_push_on_docker "$(Build.SourcesDirectory)/store-videogame-products-example" "videogameproducts" "${{ parameters.imageTag }}" "${generatedPassword}"
+                sudo ./linux-scripts/buildService.sh build_and_push_on_docker "$(Build.SourcesDirectory)/store-videogamestore-final-example" "videogamestore" "${{ parameters.imageTag }}" "${generatedPassword}"
+                sudo ./linux-scripts/buildService.sh use_ansible_vault "${generatedPassword}" "decrypt"
           - task: Docker@2
             inputs:
               command: 'logout'
