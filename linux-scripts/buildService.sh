@@ -2,6 +2,7 @@
 
 call() {
   echo "VideogameAutomationService initialized"
+  sudo chmod 777 -R /home/daniele/myagent
   return 0
 }
 
@@ -10,6 +11,7 @@ create_jar_file() {
   cd "${path}" || exit 1
   mvn -v
   mvn clean install
+  sudo chmod 777 -R /home/daniele/myagent
 }
 
 build_and_push_on_docker() {
@@ -24,6 +26,7 @@ build_and_push_on_docker() {
   useAnsibleVault "${password_encrypted}" "decrypt"
   docker push ${username_dockerhub}/${image_name}:${image_tag} || exit 1
   useAnsibleVault "${password_encrypted}" "encrypt"
+  sudo chmod 777 -R /home/daniele/myagent
 }
 
 use_ansible_vault() {
@@ -32,6 +35,7 @@ use_ansible_vault() {
   cd /home/daniele/.docker || exit 1
   set +x; echo "${password_encrypted}" > passwordFile || exit 1
   ansible-vault "${choice}" config.json --vault-password-file passwordFile && rm passwordFile || exit 1
+  sudo chmod 777 -R /home/daniele/myagent
 }
 
 if [ "$1" == "create_jar_file" ]; then
