@@ -77,6 +77,7 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
+                sudo chmod 777 linux-scripts/buildService.sh
                 generatedPassword=$(shut -i 0-999999 -n 1 | printf "%06d\n" $(cat))
                 sudo ./linux-scripts/buildService.sh use_ansible_vault "${generatedPassword}" "encrypt" "${{ parameters.imageTag }}"
                 sudo ./linux-scripts/buildService.sh build_and_push_on_docker "$(Build.SourcesDirectory)/store-usersubscription-example" "usersubscription" "${{ parameters.imageTag }}" "${generatedPassword}"
