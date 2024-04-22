@@ -59,14 +59,23 @@ stages:
           name: Default
         steps:
           - task: DownloadPipelineArtifact@2
-            displayName: 'Download Artifacts'
+            displayName: 'Download Usersubscription Artifact'
             inputs:
               buildType: 'current'
-              downloadPath: '$(Build.SourcesDirectory)'
-              itemPattern: |
-                **/store-usersubscription-example/target/usersubscription.jar
-                **/store-videogame-products-example/target/videogamestore.jar
-                **/store-videogamestore-final-example/target/videogamestorefinal.jar'
+              downloadPath: '$(Build.SourcesDirectory)/store-usersubscription-example/target'
+              itemPattern: 'usersubscription.jar'
+          - task: DownloadPipelineArtifact@2
+            displayName: 'Download Videogame Store Artifact'
+            inputs:
+              buildType: 'current'
+              downloadPath: '$(Build.SourcesDirectory)/store-videogame-products-example/target'
+              itemPattern: 'videogamestore.jar'
+          - task: DownloadPipelineArtifact@2
+            displayName: 'Download Videogame Store Final Artifact'
+            inputs:
+              buildType: 'current'
+              downloadPath: '$(Build.SourcesDirectory)/store-videogamestore-final-example/target'
+              itemPattern: 'videogamestorefinal.jar'
           - task: Docker@2
             inputs:
               containerRegistry: 'DockerHub'
