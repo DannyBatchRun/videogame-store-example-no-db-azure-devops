@@ -64,18 +64,21 @@ stages:
               downloadType: 'single'
               artifactName: 'usersubscription.jar'
               downloadPath: '$(Build.SourcesDirectory)/store-usersubscription-example/target'
+            displayName: 'Download Artifact UserSubscription'
           - task: DownloadBuildArtifacts@1
             inputs:
               buildType: 'current'
               downloadType: 'single'
               artifactName: 'videogamestore.jar'
               downloadPath: '$(Build.SourcesDirectory)/store-videogame-products-example/target'
+            displayName: 'Download Artifact VideogameProducts'
           - task: DownloadBuildArtifacts@1
             inputs:
               buildType: 'current'
               downloadType: 'single'
               artifactName: 'videogamestorefinal.jar'
               downloadPath: '$(Build.SourcesDirectory)/store-videogamestore-final-example/target'
+            displayName: 'Download Artifact VideogameStore'
           - task: Docker@2
             inputs:
               containerRegistry: 'DockerHub'
@@ -118,6 +121,9 @@ stages:
             inputs:
               sourceFolder: '$(Build.SourcesDirectory)'
               contents: '**'
+
+
+
 
 
 

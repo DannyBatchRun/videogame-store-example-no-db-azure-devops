@@ -19,12 +19,11 @@ build_and_push_on_docker() {
   image_name=$2
   image_tag=$3
   password_encrypted=$4
-  username_dockerhub="dannybatchrun"
   cd "${path}" || exit 1
   docker buildx build . -t ${image_name} || exit 1
-  docker tag ${image_name} ${username_dockerhub}:${image_name}:${image_tag} || exit 1
+  docker tag ${image_name} dannybatchrun:${image_name}:${image_tag} || exit 1
   useAnsibleVault "${password_encrypted}" "decrypt"
-  docker push ${username_dockerhub}/${image_name}:${image_tag} || exit 1
+  docker push dannybatchrun/${image_name}:${image_tag} || exit 1
   useAnsibleVault "${password_encrypted}" "encrypt"
   sudo chmod 777 -R /home/daniele/myagent
 }
