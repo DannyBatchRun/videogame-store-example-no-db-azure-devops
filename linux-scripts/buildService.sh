@@ -25,9 +25,9 @@ build_and_push_on_docker() {
   docker login -u ${userdock} -p ${passwdock}
   docker buildx build . -t ${image_name} || exit 1
   docker tag "${image_name}" dannybatchrun/${image_name}:${image_tag} || exit 1
-  useAnsibleVault "${password_encrypted}" "decrypt"
+  sudo useAnsibleVault "${password_encrypted}" "decrypt"
   docker push dannybatchrun/${image_name}:${image_tag} || exit 1
-  useAnsibleVault "${password_encrypted}" "encrypt"
+  sudo useAnsibleVault "${password_encrypted}" "encrypt"
   sudo chmod 777 -R /home/daniele/myagent
 }
 
