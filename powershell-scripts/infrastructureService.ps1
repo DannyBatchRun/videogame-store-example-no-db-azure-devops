@@ -1,0 +1,135 @@
+function call() {
+    Write-Host "VideogameServiceInfrastructure initialized"
+    return this
+}
+
+function executeExpression {
+    param(
+        [string]$executeCmd
+    )
+    Invoke-Expression $executeCmd
+}
+
+function runPipeline {
+    param(
+        [string]$name,
+        [string]$branch,
+        [string]$passArguments
+    )
+    $organization = "https://dev.azure.com/infraplayground"
+    $runPipelineCommand = "az pipelines run --name $name --org $organization --project videogame-store-example-infrastructure --branch $branch --parameters $passArguments --output json"
+    $runResult = Invoke-Expression $runPipelineCommand | ConvertFrom-Json
+    $runId = $runResult.id
+    $completedPipeline = $false
+    while (-not $completedPipeline) {
+        $statusPipelineCommand = "az pipelines runs show --id $runId --org $organization --project videogame-store-example-infrastructure --output json"
+        $statusPipeline = Invoke-Expression $statusPipelineCommand | ConvertFrom-Json
+        Write-Host "Stato attuale della pipeline:" $statusPipeline.status
+        if ($statusPipeline.status -eq "completed") {
+            $completedPipeline = $true
+            Write-Host "Pipeline completata."
+        } else {
+            Write-Host "Pipeline non completata. Controllo previsto tra circa un minuto."
+            Start-Sleep -Seconds 60
+        }
+    }
+}
+
+function executeCommand {
+    param(
+        [string]$command
+    )
+    try {
+        Invoke-Expression -Command $command
+        Write-Host "$command command executed successfully"
+    } catch {
+        Write-Error "$Command command failed."
+    }
+}
+
+function createHelmManifest {
+    params(
+        [string]$microservice
+    )
+    $currentLocation = Get-Location
+    $path = "helm-integration/${microservice}"
+    Write-Host "**** Path: $path ****"
+    Set-Location $path
+    helm package .
+    $pkg = (Get-ChildItem -Filter "*.tgz" | ForEach-Object { $_.Name }) -join "`n"
+    $helmInstallCommand = "helm install $microservice ./$pkg --set ""image.repository=index.docker.io/dannybatchrun/$microservice,image.tag=1.0.0,service.type=NodePort -n $microservice"
+    Invoke-Expression $helmInstallCommand
+    $helmManifestCommand = "helm get manifest $microservice -n $microservice"
+    Invoke-Expression $helmManifestCommand
+    Set-Location $currentLocation
+}
+
+function installOrUpgradeHelmManifest {
+    params(
+        [string]$microservice,
+        [string]$imageTag,
+        [string]$servicePort
+    )
+    $currentLocation = Get-Location
+    $helmList = (helm list --short -n $microservice 2>$null).Trim()
+    [bool]$isPresent = if ($helmList -match $microservice) { $true } else { $false }
+    $path = "helm-integration/${microservice}"
+    Write-Host "**** Path: $path ****"
+    Set-Location $path
+    helm package .
+    if($isPresent -eq $true) {
+        $pkg = (Get-ChildItem -Filter "*.tgz" | ForEach-Object { $_.Name }) -join "`n"
+        $helmInstallCommand = "helm install $microservice ./$pkg --set ""image.repository=index.docker.io/dannybatchrun/$microservice,image.tag=$imageTag,image.pullPolicy=Always,service.port=$servicePort,livenessProbe.httpGet.path=/health,livenessProbe.httpGet.port=$servicePort,livenessProbe.initialDelaySeconds=30,readinessProbe.httpGet.path=/health,readinessProbe.httpGet.port=$servicePort,readinessProbe.initialDelaySeconds=30,service.type=LoadBalancer -n $microservice"
+        Invoke-Expression $helmInstallCommand
+    } elseif ($isPresent -eq $false) {
+        $chartVersion = $imageTag -replace '[^0-9.]', ''
+        Write-Host "**** Chart Version of Helm: $chartVersion ****"
+        $chartContent = Get-Content Chart.yaml
+        $chartContent = $chartContent -replace '^version:.*', "version: ${chartVersion}"
+        $chartContent | Set-Content Chart.yaml
+        kubectl scale --replicas=0 "deployment/${imageName}" -n "${imageName}"
+        $helmUpgradeCommand = "helm upgrade $imageName . --set ""image.repository=index.docker.io/dannybatchrun/$microservice,image.tag=$imageTag,image.pullPolicy=Always,service.port=$servicePort,livenessProbe.httpGet.path=/health,livenessProbe.httpGet.port=$servicePort,livenessProbe.initialDelaySeconds=30,readinessProbe.httpGet.path=/health,readinessProbe.httpGet.port=$servicePort,readinessProbe.initialDelaySeconds=30,service.type=LoadBalancer -n $microservice"
+        Invoke-Expression $helmUpgradeCommand
+        kubectl scale --replicas=1 "deployment/${imageName}" -n "${imageName}"
+    }
+    $networkPolicyExists = (kubectl get networkpolicy allow-all -n $microservice --ignore-not-found 2>$null).Trim()
+    if ($networkPolicyExists) {
+        Write-Output "NetworkPolicy allow-all already exists in namespace $microservice"
+    } else {
+        kubectl apply -f helm-integration\$microservice\networkpolicy.yaml -n $microservice
+    }
+    Set-Location $currentLocation
+}
+
+function controlContext {
+    param(
+        [string]$requested
+    )
+    $currentContext = (kubectl config current-context).Trim()
+    if($currentContext -eq $requested) {
+        kubectl config use-context $requested
+        Write-Host "Switched to $requested context"
+    } else {
+        Write-Host "Already in $requested context"
+    }
+}
+
+function cleanLocalInfrastructures {
+    Write-Host "**** Deleting Helm Manifests ****"
+    executeExpression("helm uninstall usersubscription -n usersubscription || true")
+    executeExpression("helm uninstall usersubscription -n usersubscription || true")
+    executeExpression("helm uninstall videogamestore -n videogamestore || true")
+    Write-Host "**** Deleting Docker Images ****"
+    executeExpression("docker rmi $(docker images -q dannybatchrun/usersubscription) --force || true")
+    executeExpression("docker rmi $(docker images -q dannybatchrun/videogameproducts) --force || true")
+    executeExpression("docker rmi $(docker images -q dannybatchrun/videogamestore) --force || true")
+    $deployments = (kubectl get deployments --all-namespaces).Trim()
+    if(-not ($deployments -contains "No resources found")) {
+        kubectl delete deployments --all --all-namespaces
+    } else {
+        Write-Host "No deployments found"
+    }
+}
+
+
+

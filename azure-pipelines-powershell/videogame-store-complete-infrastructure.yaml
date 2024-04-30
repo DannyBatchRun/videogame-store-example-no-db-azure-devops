@@ -1,0 +1,184 @@
+trigger:
+  batch: true
+  branches:
+    include:
+      - master
+
+resources:
+  - repo: self
+
+parameters:
+  - name: branchName
+    type: string
+    default: 'master'
+  - name: imageTag
+    type: string
+    default: '1.0.0'
+
+variables:
+  proceedWithDeploy: false
+
+stages:
+  - stage: CheckRunningPackages
+    displayName: Check Running Packages
+    jobs:
+      - job: CheckRunningPackages
+        displayName: Check Running Packages
+        pool:
+          name: Default
+        steps:
+          - task: PowerShell@2
+            displayName: Check Running Packages
+            inputs:
+              targetType: 'inline'
+              script: |
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                executeCommand -command "helm version"
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                executeCommand -command "java --version"
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                executeCommand -command "mvn -v"
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                executeCommand -command "npm version"
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                executeCommand -command "minikube version"
+                $minikubeStatus = (minikube status 2>$null).Trim()
+                if ($minikubeStatus -contains "host: Stopped") {
+                  . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                  executeCommand -command "minikube start"
+                } else {
+                  Write-Host "Minikube already started"
+                }
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                controlContext -requested "minikube"
+  - stage: CleanPreviousInstall
+    displayName: Clean Previous Install
+    jobs:
+      - job: CleanPreviousInstall
+        displayName: Clean Previous Install
+        pool:
+          name: Default
+        steps:
+          - task: PowerShell@2
+            displayName: Clean Previous Install
+            inputs:
+              targetType: 'inline'
+              script: |
+                Write-Host "**** Cleaning old builds with Helm and Docker ****"
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                cleanLocalInfrastructures
+                Write-Host "**** Docker Images Pruned ****"
+  - stage: HelmInstall
+    displayName: Helm Install
+    jobs:
+      - job: HelmInstall
+        displayName: Helm Install
+        pool:
+          name: Default
+        steps:
+          - task: PowerShell@2
+            displayName: Helm Install
+            inputs:
+              targetType: 'inline'
+              script: |
+                Write-Host "**** Creating Three Helm Manifests Empty. It will start in a minute. ****"
+                Start-Sleep -Seconds 60
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                createHelmManifest -microservice "usersubscription"
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                createHelmManifest -microservice "videogameproducts"
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                createHelmManifest -microservice "videogamestore"
+  - stage: Build_and_Push_on_Docker
+    displayName: 'Build and Push on Docker'
+    jobs:
+      - job: Build_and_Push_on_Docker
+        displayName: 'Build and Push on Docker'
+        steps:
+          - script: |
+              [string]$paraReference = "imageTag=${{ parameters.imageTag }}"
+              [string]$branchName = "$(Build.SourceBranchName)"
+              Write-Host "*** Pipeline Build in Local is in Running. This Pipeline will continue after finished. ****"
+              aws s3 cp s3://script-utils/infrastructureService.ps1 .
+              powershell -Command "& { . .\infrastructureService.ps1; runPipeline -name 'videogame-store-build-complete' -branch $branchName -passArguments $paraReference }"
+              rm infrastructureService.ps1
+    pool:
+      vmImage: 'WindowsAgent'
+  - stage: Replace_Images_Deployment
+    displayName: 'Replace Images Deployment'
+    jobs:
+      - job: Replace_Images_Deployment
+        displayName: 'Replace Images Deployment'
+        steps:
+          - script: |
+              [string]$paraReference = "imageName=${{ parameters.branchName }} imageVersion=${{ parameters.imageTag }} deployAll=true"
+              [string]$branchName = "$(Build.SourceBranchName)"
+              Write-Host *** Pipeline Deploy in Local is in Running. This Pipeline will continue after finished. ****
+              aws s3 cp s3://script-utils/infrastructureService.ps1 .
+              powershell -Command "& { . .\infrastructureService.ps1; runPipeline -name 'videogame-store-deploy-complete' -branch $branchName -passArguments $paraReference }"
+              rm infrastructureService.ps1
+    pool:
+      vmImage: 'WindowsAgent'
+  - stage: Test_Automation
+    displayName: 'Test Automation'
+    jobs:
+      - job: Test_Automation
+        displayName: 'Test Automation'
+        steps:
+          - script: |
+              [string]$paraReference = "USERSUBSCRIPTION_TEST=true VIDEOGAMEPRODUCTS_TEST=true VIDEOGAMESTORE_TEST=true"
+              [string]$branchName = "$(Build.SourceBranchName)"
+              Write-Host "*** Pipeline Automation Test is in Running. This Pipeline will continue after finished. ***"
+              Write-Host "*** Waiting Containers for start. Sleep for 5 minutes. ***"
+              Start-Sleep -Seconds 300
+              aws s3 cp s3://script-utils/infrastructureService.ps1 .
+              powershell -Command "& { . .\infrastructureService.ps1; runPipeline -name 'videogame-store-automation-test-complete' -branch $branchName -passArguments $paraReference }"
+              rm infrastructureService.ps1
+    pool:
+      vmImage: 'WindowsAgent'
+  - stage: Deploy_GKE
+    displayName: 'Deploy on GKE'
+    jobs:
+      - job: Deploy_GKE
+        displayName: 'Deploy on GKE'
+        steps:
+          - task: PowerShell@2
+            inputs:
+              targetType: 'inline'
+              script: |
+                $proceed = $(System.Prompt.run("Proceed with GKE deploy?", "warning", "Yes", "No", "warn")).ToLower()
+                if ($proceed -eq "yes") {
+                  Write-Host "User confirmed. Proceeding with deploy."
+                  Write-Output "##vso[task.setvariable variable=proceedWithDeploy]true"
+                }
+                else {
+                  Write-Host "User canceled. Skipping deploy."
+                }
+          - script: |
+              if [ "$(proceedWithDeploy)" == "true" ]; then
+                echo "Deployed FAKE on Google Kubernetes Engine"
+              else
+                echo "Skipping deploy as user canceled."
+              fi
+            displayName: 'Deploy Condition'
+  - stage: Cleanup
+    displayName: Cleanup Stage
+    dependsOn: Deploy_GKE
+    condition: always()
+    jobs:
+      - job: CleanupJob
+        displayName: Cleanup Job
+        pool:
+          name: Default
+        steps:
+          - script: |
+              if [ "$(isPullRequest)" = true ]; then
+                  echo "Pipeline Success"
+              else
+                  echo "Pipeline Failure"
+              fi
+            displayName: 'Print Pipeline Status'
+          - task: DeleteFiles@1
+            inputs:
+              sourceFolder: '$(Build.SourcesDirectory)'
+              contents: '**'
