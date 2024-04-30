@@ -8,9 +8,6 @@ resources:
   - repo: self
 
 parameters:
-  - name: branchName
-    type: string
-    default: 'master'
   - name: imageTag
     type: string
     default: '1.0.0'
@@ -100,8 +97,8 @@ stages:
         displayName: 'Build and Push on Docker'
         steps:
           - script: |
-              [string]$paraReference = "imageTag=${{ parameters.imageTag }}"
               [string]$branchName = "$(Build.SourceBranchName)"
+              [string]$paraReference = "imageTag=${{ parameters.imageTag }}"
               Write-Host "*** Pipeline Build in Local is in Running. This Pipeline will continue after finished. ****"
               aws s3 cp s3://script-utils/infrastructureService.ps1 .
               powershell -Command "& { . .\infrastructureService.ps1; runPipeline -name 'videogame-store-build-complete' -branch $branchName -passArguments $paraReference }"
@@ -115,8 +112,8 @@ stages:
         displayName: 'Replace Images Deployment'
         steps:
           - script: |
-              [string]$paraReference = "imageName=${{ parameters.branchName }} imageVersion=${{ parameters.imageTag }} deployAll=true"
               [string]$branchName = "$(Build.SourceBranchName)"
+              [string]$paraReference = "imageName=usersubscription imageVersion=${{ parameters.imageTag }} deployAll=true"
               Write-Host *** Pipeline Deploy in Local is in Running. This Pipeline will continue after finished. ****
               aws s3 cp s3://script-utils/infrastructureService.ps1 .
               powershell -Command "& { . .\infrastructureService.ps1; runPipeline -name 'videogame-store-deploy-complete' -branch $branchName -passArguments $paraReference }"
