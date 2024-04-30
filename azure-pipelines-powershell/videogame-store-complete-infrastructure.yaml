@@ -115,6 +115,11 @@ stages:
                 git checkout $branchName
                 . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
                 runPipeline -name "videogame-store-build-complete" -branch "$branchName" -passArguments "$paraReference"
+          - task: DeleteFiles@1
+            displayName: 'Cleanup'
+            inputs:
+              sourceFolder: '$(Build.SourcesDirectory)'
+              contents: '**'
   - stage: Replace_Images_Deployment
     displayName: 'Replace Images Deployment'
     jobs:
@@ -140,6 +145,11 @@ stages:
                 git checkout $branchName
                 . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
                 runPipeline -name "videogame-store-deploy-complete" -branch "$branchName" -passArguments "$paraReference"
+          - task: DeleteFiles@1
+            displayName: 'Cleanup'
+            inputs:
+              sourceFolder: '$(Build.SourcesDirectory)'
+              contents: '**'
   - stage: Test_Automation
     displayName: 'Test Automation'
     jobs:
@@ -167,6 +177,11 @@ stages:
                 Start-Sleep -Seconds 300
                 . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
                 runPipeline -name "videogame-store-automation-test-complete" -branch "$branchName" -passArguments "$paraReference"
+          - task: DeleteFiles@1
+            displayName: 'Cleanup'
+            inputs:
+              sourceFolder: '$(Build.SourcesDirectory)'
+              contents: '**'
   - stage: Deploy_GKE
     displayName: 'Deploy on GKE'
     jobs:
