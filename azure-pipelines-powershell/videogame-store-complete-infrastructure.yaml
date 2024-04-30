@@ -105,15 +105,16 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
+                git pull --force
+                git fetch --force
                 [string]$branchName = "$(Build.SourceBranchName)"
                 [string]$paraReference = "imageTag=${{ parameters.imageTag }}"
                 Write-Host "*** Pipeline Build in Local is in Running. This Pipeline will continue after finished. ****"
                 Write-Host "*** Branch Name : $branchName ***"
                 Write-Host "*** Composed Arguments: $paraReference ***" 
                 git checkout $branchName
-                aws s3 cp s3://script-utils/infrastructureService.ps1 .
-                powershell -Command "& { . .\infrastructureService.ps1; runPipeline -name 'videogame-store-build-complete' -branch $branchName -passArguments $paraReference }"
-                rm infrastructureService.ps1
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                runPipeline -name "videogame-store-build-complete" -branch "$branchName" -passArguments "$paraReference"
   - stage: Replace_Images_Deployment
     displayName: 'Replace Images Deployment'
     jobs:
@@ -129,15 +130,16 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
+                git pull --force 
+                git fetch --force
                 [string]$branchName = "$(Build.SourceBranchName)"
                 [string]$paraReference = "imageName=usersubscription imageVersion=${{ parameters.imageTag }} deployAll=true"
                 Write-Host *** Pipeline Deploy in Local is in Running. This Pipeline will continue after finished. ****
                 Write-Host "*** Branch Name : $branchName ***"
                 Write-Host "*** Composed Arguments: $paraReference ***" 
                 git checkout $branchName
-                aws s3 cp s3://script-utils/infrastructureService.ps1 .
-                powershell -Command "& { . .\infrastructureService.ps1; runPipeline -name 'videogame-store-deploy-complete' -branch $branchName -passArguments $paraReference }"
-                rm infrastructureService.ps1
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                runPipeline -name "videogame-store-deploy-complete" -branch "$branchName" -passArguments "$paraReference"
   - stage: Test_Automation
     displayName: 'Test Automation'
     jobs:
@@ -153,6 +155,8 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
+                git pull --force
+                git fetch --force
                 [string]$paraReference = "USERSUBSCRIPTION_TEST=true VIDEOGAMEPRODUCTS_TEST=true VIDEOGAMESTORE_TEST=true"
                 [string]$branchName = "$(Build.SourceBranchName)"
                 Write-Host "*** Pipeline Automation Test is in Running. This Pipeline will continue after finished. ***"
@@ -161,9 +165,8 @@ stages:
                 Write-Host "*** Composed Arguments: $paraReference ***" 
                 git checkout $branchName
                 Start-Sleep -Seconds 300
-                aws s3 cp s3://script-utils/infrastructureService.ps1 .
-                powershell -Command "& { . .\infrastructureService.ps1; runPipeline -name 'videogame-store-automation-test-complete' -branch $branchName -passArguments $paraReference }"
-                rm infrastructureService.ps1
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                runPipeline -name "videogame-store-automation-test-complete" -branch "$branchName" -passArguments "$paraReference"
   - stage: Deploy_GKE
     displayName: 'Deploy on GKE'
     jobs:
