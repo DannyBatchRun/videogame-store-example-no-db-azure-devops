@@ -105,14 +105,11 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
-                cd $(Build.SourcesDirectory)
-                git pull --force ; git fetch --force
                 [string]$branchName = "$(Build.SourceBranchName)"
                 [string]$paraReference = "imageTag=${{ parameters.imageTag }}"
                 Write-Host "*** Pipeline Build in Local is in Running. This Pipeline will continue after finished. ****"
                 Write-Host "*** Branch Name : $branchName ***"
                 Write-Host "*** Composed Arguments: $paraReference ***" 
-                git checkout $branchName
                 . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
                 runPipeline -name "videogame-store-build-complete" -branch "$branchName" -passArguments "$paraReference"
           - task: DeleteFiles@1
@@ -135,14 +132,11 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
-                cd $(Build.SourcesDirectory)
-                git pull --force ; git fetch --force
                 [string]$branchName = "$(Build.SourceBranchName)"
                 [string]$paraReference = "imageName=usersubscription imageVersion=${{ parameters.imageTag }} deployAll=true"
                 Write-Host *** Pipeline Deploy in Local is in Running. This Pipeline will continue after finished. ****
                 Write-Host "*** Branch Name : $branchName ***"
                 Write-Host "*** Composed Arguments: $paraReference ***" 
-                git checkout $branchName
                 . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
                 runPipeline -name "videogame-store-deploy-complete" -branch "$branchName" -passArguments "$paraReference"
           - task: DeleteFiles@1
@@ -165,15 +159,12 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
-                cd $(Build.SourcesDirectory)
-                git pull --force ; git fetch --force
                 [string]$paraReference = "USERSUBSCRIPTION_TEST=true VIDEOGAMEPRODUCTS_TEST=true VIDEOGAMESTORE_TEST=true"
                 [string]$branchName = "$(Build.SourceBranchName)"
                 Write-Host "*** Pipeline Automation Test is in Running. This Pipeline will continue after finished. ***"
                 Write-Host "*** Waiting Containers for start. Sleep for 5 minutes. ***"
                 Write-Host "*** Branch Name : $branchName ***"
                 Write-Host "*** Composed Arguments: $paraReference ***" 
-                git checkout $branchName
                 Start-Sleep -Seconds 300
                 . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
                 runPipeline -name "videogame-store-automation-test-complete" -branch "$branchName" -passArguments "$paraReference"
