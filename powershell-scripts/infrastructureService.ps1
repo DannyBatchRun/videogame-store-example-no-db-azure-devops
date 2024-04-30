@@ -11,6 +11,7 @@ function runPipeline {
     )
     $organization = "https://dev.azure.com/infraplayground"
     $runPipelineCommand = "az pipelines run --name $name --org $organization --project videogame-store-example-infrastructure --branch $branch --parameters $passArguments --output json"
+    Write-Host "runPipelineCommand is $runPipelineCommand"
     $runResult = Invoke-Expression $runPipelineCommand | ConvertFrom-Json
     $runId = $runResult.id
     $completedPipeline = $false
@@ -136,6 +137,7 @@ function cleanLocalInfrastructures {
         }
     }
 }
+
 
 
 
