@@ -97,7 +97,8 @@ stages:
         displayName: 'Build and Push on Docker'
         pool:
           name: Default
-          vmImage: 'WindowsAgent'
+          demands:
+            - Agent.Name -equals WindowsAgent
         steps:
           - script: |
               [string]$branchName = "$(Build.SourceBranchName)"
@@ -113,7 +114,8 @@ stages:
         displayName: 'Replace Images Deployment'
         pool:
           name: Default
-          vmImage: 'WindowsAgent'
+          demands:
+            - Agent.Name -equals WindowsAgent
         steps:
           - script: |
               [string]$branchName = "$(Build.SourceBranchName)"
@@ -129,7 +131,8 @@ stages:
         displayName: 'Test Automation'
         pool:
           name: Default
-          vmImage: 'WindowsAgent'
+          demands:
+            - Agent.Name -equals WindowsAgent
         steps:
           - script: |
               [string]$paraReference = "USERSUBSCRIPTION_TEST=true VIDEOGAMEPRODUCTS_TEST=true VIDEOGAMESTORE_TEST=true"
