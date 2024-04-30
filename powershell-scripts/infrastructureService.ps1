@@ -50,7 +50,7 @@ function createHelmManifest {
     Set-Location $path
     helm package .
     $pkg = (Get-ChildItem -Filter "*.tgz" | ForEach-Object { $_.Name }) -join "`n"
-    [string]$helmInstallCommand = "helm install $microservice ./$pkg --set ""image.repository=index.docker.io/dannybatchrun/$($microservice),image.tag=$($imageTag),image.pullPolicy=Always,service.port=$($servicePort),livenessProbe.httpGet.path=/health,livenessProbe.httpGet.port=$($servicePort),livenessProbe.initialDelaySeconds=30,readinessProbe.httpGet.path=/health,readinessProbe.httpGet.port=$($servicePort),readinessProbe.initialDelaySeconds=30,service.type=LoadBalancer -n $($microservice)"
+    $helmInstallCommand = "helm install $microservice ./$pkg --set 'image.repository=index.docker.io/dannybatchrun/$microservice,image.tag=$imageTag,image.pullPolicy=Always,service.port=$servicePort,livenessProbe.httpGet.path=/health,livenessProbe.httpGet.port=$servicePort,livenessProbe.initialDelaySeconds=30,readinessProbe.httpGet.path=/health,readinessProbe.httpGet.port=$servicePort,readinessProbe.initialDelaySeconds=30,service.type=LoadBalancer' -n $microservice"
     Invoke-Expression $helmInstallCommand
     [string]$helmManifestCommand = "helm get manifest $microservice -n $microservice"
     Invoke-Expression $helmManifestCommand
@@ -72,7 +72,7 @@ function installOrUpgradeHelmManifest {
     helm package .
     if($isPresent -eq $true) {
         $pkg = (Get-ChildItem -Filter "*.tgz" | ForEach-Object { $_.Name }) -join "`n"
-        [string]$helmInstallCommand = "helm install $microservice ./$pkg --set ""image.repository=index.docker.io/dannybatchrun/$($microservice),image.tag=$($imageTag),image.pullPolicy=Always,service.port=$($servicePort),livenessProbe.httpGet.path=/health,livenessProbe.httpGet.port=$($servicePort),livenessProbe.initialDelaySeconds=30,readinessProbe.httpGet.path=/health,readinessProbe.httpGet.port=$($servicePort),readinessProbe.initialDelaySeconds=30,service.type=LoadBalancer -n $($microservice)"
+        $helmInstallCommand = "helm install $microservice ./$pkg --set 'image.repository=index.docker.io/dannybatchrun/$microservice,image.tag=$imageTag,image.pullPolicy=Always,service.port=$servicePort,livenessProbe.httpGet.path=/health,livenessProbe.httpGet.port=$servicePort,livenessProbe.initialDelaySeconds=30,readinessProbe.httpGet.path=/health,readinessProbe.httpGet.port=$servicePort,readinessProbe.initialDelaySeconds=30,service.type=LoadBalancer' -n $microservice"
         Invoke-Expression $helmInstallCommand
     } elseif ($isPresent -eq $false) {
         $chartVersion = $imageTag -replace '[^0-9.]', ''
@@ -81,7 +81,7 @@ function installOrUpgradeHelmManifest {
         $chartContent = $chartContent -replace '^version:.*', "version: ${chartVersion}"
         $chartContent | Set-Content Chart.yaml
         kubectl scale --replicas=0 "deployment/${imageName}" -n "${imageName}"
-        [string]$helmUpgradeCommand = "helm upgrade $imageName . --set ""image.repository=index.docker.io/dannybatchrun/$($microservice),image.tag=$($imageTag),image.pullPolicy=Always,service.port=$($servicePort),livenessProbe.httpGet.path=/health,livenessProbe.httpGet.port=$($servicePort),livenessProbe.initialDelaySeconds=30,readinessProbe.httpGet.path=/health,readinessProbe.httpGet.port=$($servicePort),readinessProbe.initialDelaySeconds=30,service.type=LoadBalancer -n $($microservice)"
+        $helmUpgradeCommand = "helm upgrade $imageName . --set 'image.repository=index.docker.io/dannybatchrun/$microservice,image.tag=$imageTag,image.pullPolicy=Always,service.port=$servicePort,livenessProbe.httpGet.path=/health,livenessProbe.httpGet.port=$servicePort,livenessProbe.initialDelaySeconds=30,readinessProbe.httpGet.path=/health,readinessProbe.httpGet.port=$servicePort,readinessProbe.initialDelaySeconds=30,service.type=LoadBalancer' -n $microservice"
         Invoke-Expression $helmUpgradeCommand
         kubectl scale --replicas=1 "deployment/${imageName}" -n "${imageName}"
     }
@@ -99,7 +99,7 @@ function controlContext {
         [string]$requested
     )
     $currentContext = (kubectl config current-context).Trim()
-    if($currentContext -eq $requested) {
+    if($currentContext -ne $requested) {
         kubectl config use-context $requested
         Write-Host "Switched to $requested context"
     } else {
@@ -115,14 +115,22 @@ function cleanLocalInfrastructures {
     Write-Host "**** Deleting Docker Images ****"
     docker images -q dannybatchrun/usersubscription | ForEach-Object { docker rmi $_ -f -ErrorAction SilentlyContinue }
     docker images -q dannybatchrun/videogameproducts | ForEach-Object { docker rmi $_ -f -ErrorAction SilentlyContinue }
-    docker images -q dannybatchrun/videogamestore | ForEach-Object { docker rmi $_ -f -ErrorAction SilentlyContinue }
+    docker images -q dannybatchrun/videogamestore | ForEach-Object { docker rmi $_ -f -ErrorAction SilentlyContinue
     $deployments = kubectl get deployments --all-namespaces -o json -ErrorAction SilentlyContinue | ConvertFrom-Json
-    if (($null -ne $deployments) -or (-not ($deployments.items.metadata.name -contains "No resources found"))) {
-        kubectl delete deployments --all --all-namespaces
-    } else {
-        Write-Host "No deployments found"
+    try {
+        $deployments = kubectl get deployments --all-namespaces -o json | ConvertFrom-Json
+        if ($null -ne $deployments -or ($deployments.items.metadata.name -notcontains "No resources found")) {
+            kubectl delete deployments --all --all-namespaces
+        } else {
+            Write-Host "Nessun deployment trovato."
+        }
+    } catch {
+        Write-Host "Errore durante il recupero delle informazioni sui deployments."
     }
 }
+
+
+
 
 
 
