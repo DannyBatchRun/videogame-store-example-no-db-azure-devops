@@ -109,20 +109,22 @@ function controlContext {
 
 function cleanLocalInfrastructures {
     Write-Host "**** Deleting Helm Manifests ****"
-    executeCommand("helm uninstall usersubscription -n usersubscription || true")
-    executeCommand("helm uninstall usersubscription -n usersubscription || true")
-    executeCommand("helm uninstall videogamestore -n videogamestore || true")
+    Invoke-Expression 'helm uninstall usersubscription -n usersubscription || $true'
+    Invoke-Expression 'helm uninstall usersubscription -n usersubscription || $true'
+    Invoke-Expression 'helm uninstall videogamestore -n videogamestore || $true'
     Write-Host "**** Deleting Docker Images ****"
-    executeCommand('docker rmi $(docker images -q dannybatchrun/usersubscription) --force || true')
-    executeCommand('docker rmi $(docker images -q dannybatchrun/videogameproducts) --force || true')
-    executeCommand('docker rmi $(docker images -q dannybatchrun/videogamestore) --force || true')
+    Invoke-Expression 'docker rmi $(docker images -q dannybatchrun/usersubscription) --force || $true'
+    Invoke-Expression 'docker rmi $(docker images -q dannybatchrun/videogameproducts) --force || $true'
+    Invoke-Expression 'docker rmi $(docker images -q dannybatchrun/videogamestore) --force || $true'
     $deployments = (kubectl get deployments --all-namespaces).Trim()
-    if(-not ($deployments -contains "No resources found")) {
+    if ($deployments -ne "No resources found" -and $null -ne $deployments) {
         kubectl delete deployments --all --all-namespaces
     } else {
         Write-Host "No deployments found"
     }
 }
+
+
 
 
 
