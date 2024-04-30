@@ -108,6 +108,9 @@ stages:
                 [string]$branchName = "$(Build.SourceBranchName)"
                 [string]$paraReference = "imageTag=${{ parameters.imageTag }}"
                 Write-Host "*** Pipeline Build in Local is in Running. This Pipeline will continue after finished. ****"
+                Write-Host "*** Branch Name : $branchName ***"
+                Write-Host "*** Composed Arguments: $paraReference ***" 
+                git checkout $branchName
                 aws s3 cp s3://script-utils/infrastructureService.ps1 .
                 powershell -Command "& { . .\infrastructureService.ps1; runPipeline -name 'videogame-store-build-complete' -branch $branchName -passArguments $paraReference }"
                 rm infrastructureService.ps1
@@ -129,6 +132,9 @@ stages:
                 [string]$branchName = "$(Build.SourceBranchName)"
                 [string]$paraReference = "imageName=usersubscription imageVersion=${{ parameters.imageTag }} deployAll=true"
                 Write-Host *** Pipeline Deploy in Local is in Running. This Pipeline will continue after finished. ****
+                Write-Host "*** Branch Name : $branchName ***"
+                Write-Host "*** Composed Arguments: $paraReference ***" 
+                git checkout $branchName
                 aws s3 cp s3://script-utils/infrastructureService.ps1 .
                 powershell -Command "& { . .\infrastructureService.ps1; runPipeline -name 'videogame-store-deploy-complete' -branch $branchName -passArguments $paraReference }"
                 rm infrastructureService.ps1
@@ -151,6 +157,9 @@ stages:
                 [string]$branchName = "$(Build.SourceBranchName)"
                 Write-Host "*** Pipeline Automation Test is in Running. This Pipeline will continue after finished. ***"
                 Write-Host "*** Waiting Containers for start. Sleep for 5 minutes. ***"
+                Write-Host "*** Branch Name : $branchName ***"
+                Write-Host "*** Composed Arguments: $paraReference ***" 
+                git checkout $branchName
                 Start-Sleep -Seconds 300
                 aws s3 cp s3://script-utils/infrastructureService.ps1 .
                 powershell -Command "& { . .\infrastructureService.ps1; runPipeline -name 'videogame-store-automation-test-complete' -branch $branchName -passArguments $paraReference }"
