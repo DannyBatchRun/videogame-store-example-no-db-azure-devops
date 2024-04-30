@@ -57,9 +57,9 @@ function createHelmManifest {
     Set-Location $path
     helm package .
     $pkg = (Get-ChildItem -Filter "*.tgz" | ForEach-Object { $_.Name }) -join "`n"
-    $helmInstallCommand = "helm install $microservice ./$pkg --set ""image.repository=index.docker.io/dannybatchrun/$microservice,image.tag=1.0.0,service.type=NodePort -n $microservice"
+    [string]$helmInstallCommand = "helm install $microservice ./$pkg --set ""image.repository=index.docker.io/dannybatchrun/$($microservice),image.tag=$($imageTag),image.pullPolicy=Always,service.port=$($servicePort),livenessProbe.httpGet.path=/health,livenessProbe.httpGet.port=$($servicePort),livenessProbe.initialDelaySeconds=30,readinessProbe.httpGet.path=/health,readinessProbe.httpGet.port=$($servicePort),readinessProbe.initialDelaySeconds=30,service.type=LoadBalancer -n $($microservice)"
     Invoke-Expression $helmInstallCommand
-    $helmManifestCommand = "helm get manifest $microservice -n $microservice"
+    [string]$helmManifestCommand = "helm get manifest $microservice -n $microservice"
     Invoke-Expression $helmManifestCommand
     Set-Location $currentLocation
 }
@@ -79,7 +79,7 @@ function installOrUpgradeHelmManifest {
     helm package .
     if($isPresent -eq $true) {
         $pkg = (Get-ChildItem -Filter "*.tgz" | ForEach-Object { $_.Name }) -join "`n"
-        $helmInstallCommand = "helm install $microservice ./$pkg --set ""image.repository=index.docker.io/dannybatchrun/$microservice,image.tag=$imageTag,image.pullPolicy=Always,service.port=$servicePort,livenessProbe.httpGet.path=/health,livenessProbe.httpGet.port=$servicePort,livenessProbe.initialDelaySeconds=30,readinessProbe.httpGet.path=/health,readinessProbe.httpGet.port=$servicePort,readinessProbe.initialDelaySeconds=30,service.type=LoadBalancer -n $microservice"
+        [string]$helmInstallCommand = "helm install $microservice ./$pkg --set ""image.repository=index.docker.io/dannybatchrun/$($microservice),image.tag=$($imageTag),image.pullPolicy=Always,service.port=$($servicePort),livenessProbe.httpGet.path=/health,livenessProbe.httpGet.port=$($servicePort),livenessProbe.initialDelaySeconds=30,readinessProbe.httpGet.path=/health,readinessProbe.httpGet.port=$($servicePort),readinessProbe.initialDelaySeconds=30,service.type=LoadBalancer -n $($microservice)"
         Invoke-Expression $helmInstallCommand
     } elseif ($isPresent -eq $false) {
         $chartVersion = $imageTag -replace '[^0-9.]', ''
@@ -88,7 +88,7 @@ function installOrUpgradeHelmManifest {
         $chartContent = $chartContent -replace '^version:.*', "version: ${chartVersion}"
         $chartContent | Set-Content Chart.yaml
         kubectl scale --replicas=0 "deployment/${imageName}" -n "${imageName}"
-        $helmUpgradeCommand = "helm upgrade $imageName . --set ""image.repository=index.docker.io/dannybatchrun/$microservice,image.tag=$imageTag,image.pullPolicy=Always,service.port=$servicePort,livenessProbe.httpGet.path=/health,livenessProbe.httpGet.port=$servicePort,livenessProbe.initialDelaySeconds=30,readinessProbe.httpGet.path=/health,readinessProbe.httpGet.port=$servicePort,readinessProbe.initialDelaySeconds=30,service.type=LoadBalancer -n $microservice"
+        [string]$helmUpgradeCommand = "helm upgrade $imageName . --set ""image.repository=index.docker.io/dannybatchrun/$($microservice),image.tag=$($imageTag),image.pullPolicy=Always,service.port=$($servicePort),livenessProbe.httpGet.path=/health,livenessProbe.httpGet.port=$($servicePort),livenessProbe.initialDelaySeconds=30,readinessProbe.httpGet.path=/health,readinessProbe.httpGet.port=$($servicePort),readinessProbe.initialDelaySeconds=30,service.type=LoadBalancer -n $($microservice)"
         Invoke-Expression $helmUpgradeCommand
         kubectl scale --replicas=1 "deployment/${imageName}" -n "${imageName}"
     }
@@ -130,6 +130,9 @@ function cleanLocalInfrastructures {
         Write-Host "No deployments found"
     }
 }
+
+
+
 
 
 
