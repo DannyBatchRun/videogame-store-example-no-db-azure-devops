@@ -113,16 +113,19 @@ function cleanLocalInfrastructures {
     Invoke-Expression 'helm uninstall usersubscription -n usersubscription || $true'
     Invoke-Expression 'helm uninstall videogamestore -n videogamestore || $true'
     Write-Host "**** Deleting Docker Images ****"
-    Invoke-Expression 'docker rmi $(docker images -q dannybatchrun/usersubscription) --force || $true'
-    Invoke-Expression 'docker rmi $(docker images -q dannybatchrun/videogameproducts) --force || $true'
-    Invoke-Expression 'docker rmi $(docker images -q dannybatchrun/videogamestore) --force || $true'
-    $deployments = (kubectl get deployments --all-namespaces).Trim()
-    if ($deployments -ne "No resources found" -and $null -ne $deployments) {
+    docker images -q dannybatchrun/usersubscription | ForEach-Object { docker rmi $_ -f -ErrorAction SilentlyContinue }
+    docker images -q dannybatchrun/videogameproducts | ForEach-Object { docker rmi $_ -f -ErrorAction SilentlyContinue }
+    docker images -q dannybatchrun/videogamestore | ForEach-Object { docker rmi $_ -f -ErrorAction SilentlyContinue }
+    $deployments = kubectl get deployments --all-namespaces -o json -ErrorAction SilentlyContinue | ConvertFrom-Json
+    if (($null -ne $deployments) -or (-not ($deployments.items.metadata.name -contains "No resources found"))) {
         kubectl delete deployments --all --all-namespaces
     } else {
         Write-Host "No deployments found"
     }
 }
+
+
+
 
 
 
