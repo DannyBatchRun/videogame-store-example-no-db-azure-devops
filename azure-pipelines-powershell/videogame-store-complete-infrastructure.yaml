@@ -90,23 +90,27 @@ stages:
                 createHelmManifest -microservice "videogameproducts"
                 . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
                 createHelmManifest -microservice "videogamestore"
-  - stage: Build_and_Push_on_Docker
-    displayName: 'Build and Push on Docker'
+  - stage: Build_and_Push_On_Docker
+    displayName: Build and Push on Docker
     jobs:
-      - job: Build_and_Push_on_Docker
+      - job: Build_and_Push_On_Docker
         displayName: 'Build and Push on Docker'
         pool:
           name: Default
           demands:
             - Agent.Name -equals WindowsAgent
         steps:
-          - script: |
-              [string]$branchName = "$(Build.SourceBranchName)"
-              [string]$paraReference = "imageTag=${{ parameters.imageTag }}"
-              Write-Host "*** Pipeline Build in Local is in Running. This Pipeline will continue after finished. ****"
-              aws s3 cp s3://script-utils/infrastructureService.ps1 .
-              powershell -Command "& { . .\infrastructureService.ps1; runPipeline -name 'videogame-store-build-complete' -branch $branchName -passArguments $paraReference }"
-              rm infrastructureService.ps1
+          - task: PowerShell@2
+            displayName: 'Build/Push Pipeline'
+            inputs:
+              targetType: 'inline'
+              script: |
+                [string]$branchName = "$(Build.SourceBranchName)"
+                [string]$paraReference = "imageTag=${{ parameters.imageTag }}"
+                Write-Host "*** Pipeline Build in Local is in Running. This Pipeline will continue after finished. ****"
+                aws s3 cp s3://script-utils/infrastructureService.ps1 .
+                powershell -Command "& { . .\infrastructureService.ps1; runPipeline -name 'videogame-store-build-complete' -branch $branchName -passArguments $paraReference }"
+                rm infrastructureService.ps1
   - stage: Replace_Images_Deployment
     displayName: 'Replace Images Deployment'
     jobs:
@@ -117,13 +121,17 @@ stages:
           demands:
             - Agent.Name -equals WindowsAgent
         steps:
-          - script: |
-              [string]$branchName = "$(Build.SourceBranchName)"
-              [string]$paraReference = "imageName=usersubscription imageVersion=${{ parameters.imageTag }} deployAll=true"
-              Write-Host *** Pipeline Deploy in Local is in Running. This Pipeline will continue after finished. ****
-              aws s3 cp s3://script-utils/infrastructureService.ps1 .
-              powershell -Command "& { . .\infrastructureService.ps1; runPipeline -name 'videogame-store-deploy-complete' -branch $branchName -passArguments $paraReference }"
-              rm infrastructureService.ps1
+          - task: PowerShell@2
+            displayName: 'Deploy Pipeline'
+            inputs:
+              targetType: 'inline'
+              script: |
+                [string]$branchName = "$(Build.SourceBranchName)"
+                [string]$paraReference = "imageName=usersubscription imageVersion=${{ parameters.imageTag }} deployAll=true"
+                Write-Host *** Pipeline Deploy in Local is in Running. This Pipeline will continue after finished. ****
+                aws s3 cp s3://script-utils/infrastructureService.ps1 .
+                powershell -Command "& { . .\infrastructureService.ps1; runPipeline -name 'videogame-store-deploy-complete' -branch $branchName -passArguments $paraReference }"
+                rm infrastructureService.ps1
   - stage: Test_Automation
     displayName: 'Test Automation'
     jobs:
@@ -134,17 +142,19 @@ stages:
           demands:
             - Agent.Name -equals WindowsAgent
         steps:
-          - script: |
-              [string]$paraReference = "USERSUBSCRIPTION_TEST=true VIDEOGAMEPRODUCTS_TEST=true VIDEOGAMESTORE_TEST=true"
-              [string]$branchName = "$(Build.SourceBranchName)"
-              Write-Host "*** Pipeline Automation Test is in Running. This Pipeline will continue after finished. ***"
-              Write-Host "*** Waiting Containers for start. Sleep for 5 minutes. ***"
-              Start-Sleep -Seconds 300
-              aws s3 cp s3://script-utils/infrastructureService.ps1 .
-              powershell -Command "& { . .\infrastructureService.ps1; runPipeline -name 'videogame-store-automation-test-complete' -branch $branchName -passArguments $paraReference }"
-              rm infrastructureService.ps1
-    pool:
-      vmImage: 'WindowsAgent'
+          - task: PowerShell@2
+            displayName: 'Test Automation Pipeline'
+            inputs:
+              targetType: 'inline'
+              script: |
+                [string]$paraReference = "USERSUBSCRIPTION_TEST=true VIDEOGAMEPRODUCTS_TEST=true VIDEOGAMESTORE_TEST=true"
+                [string]$branchName = "$(Build.SourceBranchName)"
+                Write-Host "*** Pipeline Automation Test is in Running. This Pipeline will continue after finished. ***"
+                Write-Host "*** Waiting Containers for start. Sleep for 5 minutes. ***"
+                Start-Sleep -Seconds 300
+                aws s3 cp s3://script-utils/infrastructureService.ps1 .
+                powershell -Command "& { . .\infrastructureService.ps1; runPipeline -name 'videogame-store-automation-test-complete' -branch $branchName -passArguments $paraReference }"
+                rm infrastructureService.ps1
   - stage: Deploy_GKE
     displayName: 'Deploy on GKE'
     jobs:
@@ -152,7 +162,8 @@ stages:
         displayName:
         pool:
           name: Default
-          vmImage: 'VideogameAgent2'
+          demands:
+            - Agent.Name -equals VideogameAgent2
         steps:
           - task: PowerShell@2
             inputs:
