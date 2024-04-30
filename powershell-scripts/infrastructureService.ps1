@@ -48,7 +48,7 @@ function executeCommand {
 }
 
 function createHelmManifest {
-    params(
+    param(
         [string]$microservice
     )
     $currentLocation = Get-Location
@@ -65,7 +65,7 @@ function createHelmManifest {
 }
 
 function installOrUpgradeHelmManifest {
-    params(
+    param(
         [string]$microservice,
         [string]$imageTag,
         [string]$servicePort
@@ -130,6 +130,9 @@ function cleanLocalInfrastructures {
         Write-Host "No deployments found"
     }
 }
+
+
+
 
 
 

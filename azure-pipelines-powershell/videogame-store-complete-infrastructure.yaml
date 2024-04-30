@@ -32,6 +32,10 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
+                sudo apt update
+                sudo apt openjdk-21-jdk -y
+                $env:JAVA_HOME = "/usr/lib/jvm/java-1.21.0-openjdk-amd64"
+                $env:PATH = "$env:JAVA_HOME/bin;$env:PATH"
                 . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
                 executeCommand -command "helm version"
                 . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
