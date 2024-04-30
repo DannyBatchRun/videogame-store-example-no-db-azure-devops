@@ -115,19 +115,30 @@ function cleanLocalInfrastructures {
     Write-Host "**** Deleting Docker Images ****"
     docker images -q dannybatchrun/usersubscription | ForEach-Object { docker rmi $_ -f -ErrorAction SilentlyContinue }
     docker images -q dannybatchrun/videogameproducts | ForEach-Object { docker rmi $_ -f -ErrorAction SilentlyContinue }
-    docker images -q dannybatchrun/videogamestore | ForEach-Object { docker rmi $_ -f -ErrorAction SilentlyContinue
-    $deployments = kubectl get deployments --all-namespaces -o json -ErrorAction SilentlyContinue | ConvertFrom-Json
-    try {
-        $deployments = kubectl get deployments --all-namespaces -o json | ConvertFrom-Json
-        if ($null -ne $deployments -or ($deployments.items.metadata.name -notcontains "No resources found")) {
-            kubectl delete deployments --all --all-namespaces
-        } else {
-            Write-Host "Nessun deployment trovato."
+    docker images -q dannybatchrun/videogamestore | ForEach-Object {
+        docker rmi $_ -f -ErrorAction SilentlyContinue
+        $deployments = kubectl get deployments --all-namespaces -o json -ErrorAction SilentlyContinue | ConvertFrom-Json
+        try
+        {
+            $deployments = kubectl get deployments --all-namespaces -o json | ConvertFrom-Json
+            if ($null -ne $deployments -or ($deployments.items.metadata.name -notcontains "No resources found"))
+            {
+                kubectl delete deployments --all --all-namespaces
+            }
+            else
+            {
+                Write-Host "Nessun deployment trovato."
+            }
         }
-    } catch {
-        Write-Host "Errore durante il recupero delle informazioni sui deployments."
+        catch
+        {
+            Write-Host "Errore durante il recupero delle informazioni sui deployments."
+        }
     }
 }
+
+
+
 
 
 
