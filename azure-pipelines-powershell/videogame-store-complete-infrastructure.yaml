@@ -95,6 +95,9 @@ stages:
     jobs:
       - job: Build_and_Push_on_Docker
         displayName: 'Build and Push on Docker'
+        pool:
+          name: Default
+          vmImage: 'WindowsAgent'
         steps:
           - script: |
               [string]$branchName = "$(Build.SourceBranchName)"
@@ -103,13 +106,14 @@ stages:
               aws s3 cp s3://script-utils/infrastructureService.ps1 .
               powershell -Command "& { . .\infrastructureService.ps1; runPipeline -name 'videogame-store-build-complete' -branch $branchName -passArguments $paraReference }"
               rm infrastructureService.ps1
-    pool:
-      vmImage: 'WindowsAgent'
   - stage: Replace_Images_Deployment
     displayName: 'Replace Images Deployment'
     jobs:
       - job: Replace_Images_Deployment
         displayName: 'Replace Images Deployment'
+        pool:
+          name: Default
+          vmImage: 'WindowsAgent'
         steps:
           - script: |
               [string]$branchName = "$(Build.SourceBranchName)"
@@ -118,13 +122,14 @@ stages:
               aws s3 cp s3://script-utils/infrastructureService.ps1 .
               powershell -Command "& { . .\infrastructureService.ps1; runPipeline -name 'videogame-store-deploy-complete' -branch $branchName -passArguments $paraReference }"
               rm infrastructureService.ps1
-    pool:
-      vmImage: 'WindowsAgent'
   - stage: Test_Automation
     displayName: 'Test Automation'
     jobs:
       - job: Test_Automation
         displayName: 'Test Automation'
+        pool:
+          name: Default
+          vmImage: 'WindowsAgent'
         steps:
           - script: |
               [string]$paraReference = "USERSUBSCRIPTION_TEST=true VIDEOGAMEPRODUCTS_TEST=true VIDEOGAMESTORE_TEST=true"
@@ -141,7 +146,10 @@ stages:
     displayName: 'Deploy on GKE'
     jobs:
       - job: Deploy_GKE
-        displayName: 'Deploy on GKE'
+        displayName:
+        pool:
+          name: Default
+          vmImage: 'VideogameAgent2'
         steps:
           - task: PowerShell@2
             inputs:
@@ -175,6 +183,12 @@ stages:
           - script: |
               if [ "$(isPullRequest)" = true ]; then
                   echo "Pipeline Success"
+                  docker image ls | grep usersubscription
+                  docker image ls | grep videogameproducts
+                  docker image ls | grep videogamestore
+                  helm list --short -n usersubscription
+                  helm list --short -n videogameproducts
+                  helm list --short -n videogamestore
               else
                   echo "Pipeline Failure"
               fi
