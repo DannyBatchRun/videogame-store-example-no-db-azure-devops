@@ -110,7 +110,7 @@ stages:
                 Write-Host "*** Pipeline Build in Local is in Running. This Pipeline will continue after finished. ****"
                 Write-Host "*** Branch Name : $branchName ***"
                 Write-Host "*** Composed Arguments: $paraReference ***" 
-                echo "powershell -Command \"& { . .\infrastructureService.ps1; runPipeline -name 'videogame-store-build-complete' -branch '\$branchName' -passArguments '\$paraReference' }\""
+                echo -E 'powershell -Command "& { . .\infrastructureService.ps1; runPipeline -name '\''videogame-store-automation-test-complete'\'' -branch '\''$branchName'\'' -passArguments '\''$paraReference'\'' }"'
           - task: DeleteFiles@1
             displayName: 'Cleanup'
             inputs:
