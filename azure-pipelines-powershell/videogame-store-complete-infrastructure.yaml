@@ -97,8 +97,6 @@ stages:
         displayName: 'Build and Push on Docker'
         pool:
           name: Default
-          demands:
-            - Agent.Name -equals WindowsAgent2
         steps:
           - task: PowerShell@2
             displayName: 'Build/Push Pipeline'
@@ -123,8 +121,6 @@ stages:
         displayName: 'Replace Images Deployment'
         pool:
           name: Default
-          demands:
-            - Agent.Name -equals WindowsAgent2
         steps:
           - task: PowerShell@2
             displayName: 'Deploy Pipeline'
@@ -146,8 +142,6 @@ stages:
     displayName: 'Test Automation'
     pool:
       name: Default
-      demands:
-        - Agent.Name -equals WindowsAgent2
     jobs:
       - job: Test_Automation
         displayName: 'Test Automation'
@@ -177,8 +171,6 @@ stages:
         displayName: 'Deploy on GKE'
         pool:
           name: Default
-          demands:
-            - Agent.Name -equals VideogameAgent2
         steps:
           - task: PowerShell@2
             inputs:
