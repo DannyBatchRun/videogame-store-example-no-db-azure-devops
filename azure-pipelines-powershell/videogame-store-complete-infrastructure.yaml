@@ -98,7 +98,7 @@ stages:
         pool:
           name: Default
           demands:
-            - Agent.Name -equals WindowsAgent
+            - Agent.Name -equals WindowsAgent2
         steps:
           - task: PowerShell@2
             displayName: 'Build/Push Pipeline'
@@ -125,7 +125,7 @@ stages:
         pool:
           name: Default
           demands:
-            - Agent.Name -equals WindowsAgent
+            - Agent.Name -equals WindowsAgent2
         steps:
           - task: PowerShell@2
             displayName: 'Deploy Pipeline'
@@ -152,7 +152,7 @@ stages:
         pool:
           name: Default
           demands:
-            - Agent.Name -equals WindowsAgent
+            - Agent.Name -equals WindowsAgent2
         steps:
           - task: PowerShell@2
             displayName: 'Test Automation Pipeline'
