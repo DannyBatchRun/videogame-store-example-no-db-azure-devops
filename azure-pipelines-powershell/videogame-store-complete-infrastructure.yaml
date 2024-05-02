@@ -92,13 +92,11 @@ stages:
                 createHelmManifest -microservice "videogamestore"
   - stage: Build_and_Push_On_Docker
     displayName: Build and Push on Docker
-    pool:
-      name: Default
-      demands:
-        - Agent.Name -equals WindowsAgent3
     jobs:
       - job: Build_and_Push_On_Docker
         displayName: 'Build and Push on Docker'
+        pool:
+          name: Default
         steps:
           - task: PowerShell@2
             displayName: 'Build/Push Pipeline'
@@ -124,8 +122,6 @@ stages:
         displayName: 'Replace Images Deployment'
         pool:
           name: Default
-          demands:
-            - Agent.Name -equals WindowsAgent3
         steps:
           - task: PowerShell@2
             displayName: 'Deploy Pipeline'
@@ -146,13 +142,11 @@ stages:
               contents: '**'
   - stage: Test_Automation
     displayName: 'Test Automation'
-    pool:
-      name: Default
-      demands:
-        - Agent.Name -equals WindowsAgent3
     jobs:
       - job: Test_Automation
         displayName: 'Test Automation'
+        pool:
+          name: Default
         steps:
           - task: PowerShell@2
             displayName: 'Test Automation Pipeline'
@@ -175,13 +169,11 @@ stages:
               contents: '**'
   - stage: Deploy_GKE
     displayName: 'Deploy on GKE'
-    pool:
-      name: Default
-      demands:
-        - Agent.Name -equals VideogameAgent2
     jobs:
       - job: Deploy_GKE
-        displayName:
+        displayName: 'Deploy on GKE'
+        pool:
+          name: Default
         steps:
           - task: PowerShell@2
             inputs:
