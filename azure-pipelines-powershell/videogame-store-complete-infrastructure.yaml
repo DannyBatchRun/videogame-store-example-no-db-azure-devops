@@ -83,6 +83,7 @@ stages:
               targetType: 'inline'
               script: |
                 Write-Host "**** Creating Three Helm Manifests Empty. It will start in a minute. ****"
+                Start-Sleep -Seconds 60
                 . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
                 createHelmManifest -microservice "usersubscription"
                 . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
@@ -109,8 +110,7 @@ stages:
                 Write-Host "*** Pipeline Build in Local is in Running. This Pipeline will continue after finished. ****"
                 Write-Host "*** Branch Name : $branchName ***"
                 Write-Host "*** Composed Arguments: $paraReference ***" 
-                $command='powershell -Command "& { . .\infrastructureService.ps1; runPipeline -name '\''videogame-store-automation-test-complete'\'' -branch '\''$branchName'\'' -passArguments '\''$paraReference'\'' }"'
-                echo "$command"
+                powershell -Command "& { . '.\$($Build.SourcesDirectory)\powershell-scripts\infrastructureService.ps1'; runPipeline -name 'videogame-store-build-complete' -branch '$branchName' -passArguments '$paraReference' }"
           - task: DeleteFiles@1
             displayName: 'Cleanup'
             inputs:
@@ -136,7 +136,7 @@ stages:
                 Write-Host *** Pipeline Deploy in Local is in Running. This Pipeline will continue after finished. ****
                 Write-Host "*** Branch Name : $branchName ***"
                 Write-Host "*** Composed Arguments: $paraReference ***" 
-                powershell -Command "& { . .\infrastructureService.ps1; runPipeline -name 'videogame-store-deploy-complete' -branch '$branchName' -passArguments '$paraReference' }"
+                powershell -Command "& { . '.\$($Build.SourcesDirectory)\powershell-scripts\infrastructureService.ps1'; runPipeline -name 'videogame-store-deploy-complete' -branch '$branchName' -passArguments '$paraReference' }"
           - task: DeleteFiles@1
             displayName: 'Cleanup'
             inputs:
@@ -164,7 +164,7 @@ stages:
                 Write-Host "*** Branch Name : $branchName ***"
                 Write-Host "*** Composed Arguments: $paraReference ***" 
                 Start-Sleep -Seconds 300
-                powershell -Command "& { . .\infrastructureService.ps1; runPipeline -name 'videogame-store-automation-test-complete' -branch '$branchName' -passArguments '$paraReference' }"
+                powershell -Command "& { . '.\$($Build.SourcesDirectory)\powershell-scripts\infrastructureService.ps1'; runPipeline -name 'videogame-store-automation-test-complete' -branch '$branchName' -passArguments '$paraReference' }"
           - task: DeleteFiles@1
             displayName: 'Cleanup'
             inputs:
