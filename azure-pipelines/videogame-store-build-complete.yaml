@@ -2,7 +2,7 @@ trigger:
   batch: true
   branches:
     include:
-      - master
+      - infrastructureIntegration
 
 resources:
   - repo: self
@@ -10,95 +10,200 @@ resources:
 parameters:
   - name: imageTag
     type: string
-    default: 'latest'
+    default: '1.0.0'
+
+variables:
+  proceedWithDeploy: false
 
 stages:
-  - stage: Maven_Stage
-    displayName: Maven Stage
+  - stage: CheckRunningPackages
+    displayName: Check Running Packages
     jobs:
-      - job: Maven_Stage
-        displayName: Maven Stage
+      - job: CheckRunningPackages
+        displayName: Check Running Packages
         pool:
           name: Default
+        steps:
+          - task: PowerShell@2
+            displayName: Check Running Packages
+            inputs:
+              targetType: 'inline'
+              script: |
+                sudo apt update
+                sudo apt openjdk-21-jdk -y
+                $env:JAVA_HOME = "/usr/lib/jvm/java-1.21.0-openjdk-amd64"
+                $env:PATH = "$env:JAVA_HOME/bin;$env:PATH"
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                executeCommand -command "helm version"
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                executeCommand -command "java --version"
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                executeCommand -command "mvn -v"
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                executeCommand -command "npm version"
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                executeCommand -command "minikube version"
+                $minikubeStatus = (minikube status 2>$null).Trim()
+                if ($minikubeStatus -contains "host: Stopped") {
+                  . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                  executeCommand -command "minikube start"
+                } else {
+                  Write-Host "Minikube already started"
+                }
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                controlContext -requested "minikube"
+  - stage: CleanPreviousInstall
+    displayName: Clean Previous Install
+    jobs:
+      - job: CleanPreviousInstall
+        displayName: Clean Previous Install
+        pool:
+          name: Default
+        steps:
+          - task: PowerShell@2
+            displayName: Clean Previous Install
+            inputs:
+              targetType: 'inline'
+              script: |
+                Write-Host "**** Cleaning old builds with Helm and Docker ****"
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                cleanLocalInfrastructures
+                Write-Host "**** Docker Images Pruned ****"
+  - stage: HelmInstall
+    displayName: Helm Install
+    jobs:
+      - job: HelmInstall
+        displayName: Helm Install
+        pool:
+          name: Default
+        steps:
+          - task: PowerShell@2
+            displayName: Helm Install
+            inputs:
+              targetType: 'inline'
+              script: |
+                Write-Host "**** Creating Three Helm Manifests Empty. It will start in a minute. ****"
+                Start-Sleep -Seconds 60
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                createHelmManifest -microservice "usersubscription"
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                createHelmManifest -microservice "videogameproducts"
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                createHelmManifest -microservice "videogamestore"
+  - stage: Build_and_Push_On_Docker
+    displayName: Build and Push on Docker
+    jobs:
+      - job: Build_and_Push_On_Docker
+        displayName: 'Build and Push on Docker'
+        pool:
+          name: Default
+          demands:
+            - Agent.Name -equals WindowsAgent2
+        steps:
+          - task: PowerShell@2
+            displayName: 'Build/Push Pipeline'
+            inputs:
+              targetType: 'inline'
+              script: |
+                [string]$branchName = "$(Build.SourceBranchName)"
+                [string]$paraReference = "imageTag=${{ parameters.imageTag }}"
+                Write-Host "*** Pipeline Build in Local is in Running. This Pipeline will continue after finished. ****"
+                Write-Host "*** Branch Name : $branchName ***"
+                Write-Host "*** Composed Arguments: $paraReference ***" 
+                powershell -Command "& { . .\infrastructureService.ps1; runPipeline -name 'videogame-store-build-complete' -branch '$branchName' -passArguments '$paraReference' }"
+          - task: DeleteFiles@1
+            displayName: 'Cleanup'
+            inputs:
+              sourceFolder: '$(Build.SourcesDirectory)'
+              contents: '**'
+  - stage: Replace_Images_Deployment
+    displayName: 'Replace Images Deployment'
+    jobs:
+      - job: Replace_Images_Deployment
+        displayName: 'Replace Images Deployment'
+        pool:
+          name: Default
+          demands:
+            - Agent.Name -equals WindowsAgent2
+        steps:
+          - task: PowerShell@2
+            displayName: 'Deploy Pipeline'
+            inputs:
+              targetType: 'inline'
+              script: |
+                [string]$branchName = "$(Build.SourceBranchName)"
+                [string]$paraReference = "imageName=usersubscription imageVersion=${{ parameters.imageTag }} deployAll=true"
+                Write-Host *** Pipeline Deploy in Local is in Running. This Pipeline will continue after finished. ****
+                Write-Host "*** Branch Name : $branchName ***"
+                Write-Host "*** Composed Arguments: $paraReference ***" 
+                powershell -Command "& { . .\infrastructureService.ps1; runPipeline -name 'videogame-store-deploy-complete' -branch '$branchName' -passArguments '$paraReference' }"
+          - task: DeleteFiles@1
+            displayName: 'Cleanup'
+            inputs:
+              sourceFolder: '$(Build.SourcesDirectory)'
+              contents: '**'
+  - stage: Test_Automation
+    displayName: 'Test Automation'
+    pool:
+      name: Default
+      demands:
+        - Agent.Name -equals WindowsAgent2
+    jobs:
+      - job: Test_Automation
+        displayName: 'Test Automation'
+        pool:
+          name: Default
+        steps:
+          - task: PowerShell@2
+            displayName: 'Test Automation Pipeline'
+            inputs:
+              targetType: 'inline'
+              script: |
+                [string]$paraReference = "USERSUBSCRIPTION_TEST=true VIDEOGAMEPRODUCTS_TEST=true VIDEOGAMESTORE_TEST=true"
+                [string]$branchName = "$(Build.SourceBranchName)"
+                Write-Host "*** Pipeline Automation Test is in Running. This Pipeline will continue after finished. ***"
+                Write-Host "*** Waiting Containers for start. Sleep for 5 minutes. ***"
+                Write-Host "*** Branch Name : $branchName ***"
+                Write-Host "*** Composed Arguments: $paraReference ***" 
+                Start-Sleep -Seconds 300
+                powershell -Command "& { . .\infrastructureService.ps1; runPipeline -name 'videogame-store-automation-test-complete' -branch '$branchName' -passArguments '$paraReference' }"
+          - task: DeleteFiles@1
+            displayName: 'Cleanup'
+            inputs:
+              sourceFolder: '$(Build.SourcesDirectory)'
+              contents: '**'
+  - stage: Deploy_GKE
+    displayName: 'Deploy on GKE'
+    jobs:
+      - job: Deploy_GKE
+        displayName: 'Deploy on GKE'
+        pool:
+          name: Default
+          demands:
+            - Agent.Name -equals VideogameAgent2
         steps:
           - task: PowerShell@2
             inputs:
               targetType: 'inline'
               script: |
-                . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
-                createJarFile -Path "$(Build.SourcesDirectory)/store-usersubscription-example"
-                . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
-                createJarFile -Path "$(Build.SourcesDirectory)/store-videogame-products-example"
-                . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
-                createJarFile -Path "$(Build.SourcesDirectory)/store-videogamestore-final-example"
-            displayName: 'Build Maven Stage'
-          - task: PublishPipelineArtifact@1
-            inputs:
-              targetPath: '$(Build.SourcesDirectory)/store-usersubscription-example/target/usersubscription.jar'
-              artifact: 'usersubscription.jar'
-            displayName: 'Publish Artifact UserSubscription'
-          - task: PublishPipelineArtifact@1
-            inputs:
-              targetPath: '$(Build.SourcesDirectory)/store-videogame-products-example/target/videogamestore.jar'
-              artifact: 'videogamestore.jar'
-            displayName: 'Publish Artifact VideogameProducts'
-          - task: PublishPipelineArtifact@1
-            inputs:
-              targetPath: '$(Build.SourcesDirectory)/store-videogamestore-final-example/target/videogamestorefinal.jar'
-              artifact: 'videogamestorefinal.jar'
-            displayName: 'Publish Artifact VideogameStore'
-  - stage: Build_and_Push_Stage
-    displayName: Docker Stage
-    jobs:
-      - job: Build
-        displayName: Docker Stage
-        pool:
-          name: Default
-        steps:
-          - task: DownloadBuildArtifacts@1
-            inputs:
-              buildType: 'current'
-              downloadType: 'single'
-              artifactName: 'usersubscription.jar'
-              downloadPath: '$(Build.SourcesDirectory)/store-usersubscription-example/target'
-            displayName: 'Download Artifact UserSubscription'
-          - task: DownloadBuildArtifacts@1
-            inputs:
-              buildType: 'current'
-              downloadType: 'single'
-              artifactName: 'videogamestore.jar'
-              downloadPath: '$(Build.SourcesDirectory)/store-videogame-products-example/target'
-            displayName: 'Download Artifact VideogameProducts'
-          - task: DownloadBuildArtifacts@1
-            inputs:
-              buildType: 'current'
-              downloadType: 'single'
-              artifactName: 'videogamestorefinal.jar'
-              downloadPath: '$(Build.SourcesDirectory)/store-videogamestore-final-example/target'
-            displayName: 'Download Artifact VideogameStore'
-          - task: Docker@2
-            inputs:
-              containerRegistry: 'DockerHub'
-              command: 'login'
-            displayName: 'Docker Login'
-          - task: PowerShell@2
-            inputs:
-              targetType: 'inline'
-              script: |
-                . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
-                buildAndPushOnDocker -Path "$(Build.SourcesDirectory)/store-usersubscription-example" -ImageName "usersubscription" -ImageTag ${{ parameters.imageTag }}
-                . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
-                buildAndPushOnDocker -Path "$(Build.SourcesDirectory)/store-videogame-products-example" -ImageName "videogameproducts" -ImageTag ${{ parameters.imageTag }}            
-                . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
-                buildAndPushOnDocker -Path "$(Build.SourcesDirectory)/store-videogamestore-final-example" -ImageName "videogamestore" -ImageTag ${{ parameters.imageTag }}
-            displayName: 'Build and Push Stage'
-          - task: Docker@2
-            inputs:
-              command: 'logout'
-            displayName: 'Docker Logout'
+                $proceed = $(System.Prompt.run("Proceed with GKE deploy?", "warning", "Yes", "No", "warn")).ToLower()
+                if ($proceed -eq "yes") {
+                  Write-Host "User confirmed. Proceeding with deploy."
+                  Write-Output "##vso[task.setvariable variable=proceedWithDeploy]true"
+                }
+                else {
+                  Write-Host "User canceled. Skipping deploy."
+                }
+          - script: |
+              if [ "$(proceedWithDeploy)" == "true" ]; then
+                echo "Deployed FAKE on Google Kubernetes Engine"
+              else
+                echo "Skipping deploy as user canceled."
+              fi
+            displayName: 'Deploy Condition'
   - stage: Cleanup
     displayName: Cleanup Stage
-    dependsOn: Build_And_Push_Stage
+    dependsOn: Deploy_GKE
     condition: always()
     jobs:
       - job: CleanupJob
@@ -109,6 +214,12 @@ stages:
           - script: |
               if [ "$(isPullRequest)" = true ]; then
                   echo "Pipeline Success"
+                  docker image ls | grep usersubscription
+                  docker image ls | grep videogameproducts
+                  docker image ls | grep videogamestore
+                  helm list --short -n usersubscription
+                  helm list --short -n videogameproducts
+                  helm list --short -n videogamestore
               else
                   echo "Pipeline Failure"
               fi
@@ -117,7 +228,3 @@ stages:
             inputs:
               sourceFolder: '$(Build.SourcesDirectory)'
               contents: '**'
-
-
-
-
