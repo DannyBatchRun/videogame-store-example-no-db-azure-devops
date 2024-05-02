@@ -95,7 +95,7 @@ stages:
     pool:
       name: Default
       demands:
-        - Agent.Name -equals WindowsAgent2
+        - Agent.Name -equals WindowsAgent3
     jobs:
       - job: Build_and_Push_On_Docker
         displayName: 'Build and Push on Docker'
@@ -125,7 +125,7 @@ stages:
         pool:
           name: Default
           demands:
-            - Agent.Name -equals WindowsAgent2
+            - Agent.Name -equals WindowsAgent3
         steps:
           - task: PowerShell@2
             displayName: 'Deploy Pipeline'
@@ -149,7 +149,7 @@ stages:
     pool:
       name: Default
       demands:
-        - Agent.Name -equals WindowsAgent2
+        - Agent.Name -equals WindowsAgent3
     jobs:
       - job: Test_Automation
         displayName: 'Test Automation'
