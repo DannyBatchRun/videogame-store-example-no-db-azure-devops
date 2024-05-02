@@ -97,6 +97,8 @@ stages:
         displayName: 'Build and Push on Docker'
         pool:
           name: Default
+          demands:
+            - Agent.Name -equals WindowsAgent2
         steps:
           - task: PowerShell@2
             displayName: 'Build/Push Pipeline'
@@ -108,8 +110,7 @@ stages:
                 Write-Host "*** Pipeline Build in Local is in Running. This Pipeline will continue after finished. ****"
                 Write-Host "*** Branch Name : $branchName ***"
                 Write-Host "*** Composed Arguments: $paraReference ***" 
-                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
-                runPipeline -name "videogame-store-build-complete" -branch "$branchName" -passArguments "$paraReference"
+                powershell -Command "& { . .\infrastructureService.ps1; runPipeline -name 'videogame-store-build-complete' -branch '$branchName' -passArguments '$paraReference' }"
           - task: DeleteFiles@1
             displayName: 'Cleanup'
             inputs:
@@ -122,6 +123,8 @@ stages:
         displayName: 'Replace Images Deployment'
         pool:
           name: Default
+          demands:
+            - Agent.Name -equals WindowsAgent2
         steps:
           - task: PowerShell@2
             displayName: 'Deploy Pipeline'
@@ -133,8 +136,7 @@ stages:
                 Write-Host *** Pipeline Deploy in Local is in Running. This Pipeline will continue after finished. ****
                 Write-Host "*** Branch Name : $branchName ***"
                 Write-Host "*** Composed Arguments: $paraReference ***" 
-                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
-                runPipeline -name "videogame-store-deploy-complete" -branch "$branchName" -passArguments "$paraReference"
+                powershell -Command "& { . .\infrastructureService.ps1; runPipeline -name 'videogame-store-deploy-complete' -branch '$branchName' -passArguments '$paraReference' }"
           - task: DeleteFiles@1
             displayName: 'Cleanup'
             inputs:
@@ -142,6 +144,10 @@ stages:
               contents: '**'
   - stage: Test_Automation
     displayName: 'Test Automation'
+    pool:
+      name: Default
+      demands:
+        - Agent.Name -equals WindowsAgent2
     jobs:
       - job: Test_Automation
         displayName: 'Test Automation'
@@ -160,8 +166,7 @@ stages:
                 Write-Host "*** Branch Name : $branchName ***"
                 Write-Host "*** Composed Arguments: $paraReference ***" 
                 Start-Sleep -Seconds 300
-                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
-                runPipeline -name "videogame-store-automation-test-complete" -branch "$branchName" -passArguments "$paraReference"
+                powershell -Command "& { . .\infrastructureService.ps1; runPipeline -name 'videogame-store-automation-test-complete' -branch '$branchName' -passArguments '$paraReference' }"
           - task: DeleteFiles@1
             displayName: 'Cleanup'
             inputs:
@@ -174,6 +179,8 @@ stages:
         displayName: 'Deploy on GKE'
         pool:
           name: Default
+          demands:
+            - Agent.Name -equals VideogameAgent2
         steps:
           - task: PowerShell@2
             inputs:
