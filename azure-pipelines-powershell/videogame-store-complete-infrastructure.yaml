@@ -102,7 +102,7 @@ stages:
             displayName: 'Build/Push Pipeline'
             inputs:
               targetType: 'inline'
-              script: |
+              pwsh: |
                 [string]$branchName = "$(Build.SourceBranchName)"
                 [string]$paraReference = "imageTag=${{ parameters.imageTag }}"
                 Write-Host "*** Pipeline Build in Local is in Running. This Pipeline will continue after finished. ****"
@@ -126,7 +126,7 @@ stages:
             displayName: 'Deploy Pipeline'
             inputs:
               targetType: 'inline'
-              script: |
+              pwsh: |
                 [string]$branchName = "$(Build.SourceBranchName)"
                 [string]$paraReference = "imageName=usersubscription imageVersion=${{ parameters.imageTag }} deployAll=true"
                 Write-Host *** Pipeline Deploy in Local is in Running. This Pipeline will continue after finished. ****
@@ -150,7 +150,7 @@ stages:
             displayName: 'Test Automation Pipeline'
             inputs:
               targetType: 'inline'
-              script: |
+              pwsh: |
                 [string]$paraReference = "USERSUBSCRIPTION_TEST=true VIDEOGAMEPRODUCTS_TEST=true VIDEOGAMESTORE_TEST=true"
                 [string]$branchName = "$(Build.SourceBranchName)"
                 Write-Host "*** Pipeline Automation Test is in Running. This Pipeline will continue after finished. ***"
