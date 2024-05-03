@@ -20,7 +20,7 @@ function runPipeline {
     } | ConvertTo-Json
     $headers = @{
         "Content-Type" = "application/json"
-        Authorization = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$pat"))
+        "Authorization" = "Bearer $pat"
     }
     Write-Host "ORGANIZATIONURL!!! $organizationUrl"
     Write-Host "PAT!!! $pat"
@@ -182,6 +182,9 @@ function cleanLocalInfrastructures {
         }
     }
 }
+
+
+
 
 
 
