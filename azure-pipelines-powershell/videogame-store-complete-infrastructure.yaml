@@ -14,7 +14,7 @@ parameters:
 
 variables:
   proceedWithDeploy: false
-name: 'Build Parameters'
+name: 'BuildParameters'
 
 stages:
   - stage: CheckRunningPackages
