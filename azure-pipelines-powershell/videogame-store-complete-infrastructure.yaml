@@ -94,23 +94,42 @@ stages:
     displayName: 'Build And Push On Docker'
     jobs:
       - job: Build_and_Push_On_Docker
-        displayName: 'Build and Push on Docker'
+        displayName: Maven Stage
         pool:
           name: Default
         steps:
-          - script: |
-              print("*** Pipeline Deploy in Local is in Running. This Pipeline will continue after finished. ***")
-              from azure.devops.connection import Connection
-              from msrest.authentication import BasicAuthentication
-              personal_access_token = "$(authentication)"
-              organization_url = "https://dev.azure.com/infraplayground"
-              credentials = BasicAuthentication('', personal_access_token)
-              connection = Connection(base_url=organization_url, creds=credentials)
-              pipeline_client = connection.clients.get_build_client()
-              project_name = "videogame-store-example-infrastructure"
-              pipeline_id = "3"
-              build = pipeline_client.queue_build(project=project_name, definition_id=int(pipeline_id))
-            displayName: 'Build/Deploy Pipeline'
+          - task: PowerShell@2
+            inputs:
+              targetType: 'inline'
+              script: |
+                Write-Host "*** Build in Local is in Running. Please wait. ***"
+                . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
+                createJarFile -Path "$(Build.SourcesDirectory)/store-usersubscription-example"
+                . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
+                createJarFile -Path "$(Build.SourcesDirectory)/store-videogame-products-example"
+                . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
+                createJarFile -Path "$(Build.SourcesDirectory)/store-videogamestore-final-example"
+            displayName: 'Build Maven Stage'
+          - task: Docker@2
+            inputs:
+              containerRegistry: 'DockerHub'
+              command: 'login'
+            displayName: 'Docker Login'
+          - task: PowerShell@2
+            inputs:
+              targetType: 'inline'
+              script: |
+                . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
+                buildAndPushOnDocker -Path "$(Build.SourcesDirectory)/store-usersubscription-example" -ImageName "usersubscription" -ImageTag ${{ parameters.imageTag }}
+                . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
+                buildAndPushOnDocker -Path "$(Build.SourcesDirectory)/store-videogame-products-example" -ImageName "videogameproducts" -ImageTag ${{ parameters.imageTag }}            
+                . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
+                buildAndPushOnDocker -Path "$(Build.SourcesDirectory)/store-videogamestore-final-example" -ImageName "videogamestore" -ImageTag ${{ parameters.imageTag }}
+            displayName: 'Build and Push Stage'
+          - task: Docker@2
+            inputs:
+              command: 'logout'
+            displayName: 'Docker Logout'
   - stage: Replace_Images_Deployment
     displayName: 'Replace Images Deployment'
     jobs:
@@ -120,19 +139,25 @@ stages:
           name: Default
         steps:
           - task: PowerShell@2
-            displayName: 'Deploy Local Pipeline'
             inputs:
               targetType: 'inline'
               script: |
-                Write-Host *** Pipeline Deploy in Local is in Running. This Pipeline will continue after finished. ****
-                $pat = "$(authentication)"
-                $parameters = @{
-                      imageName = "usersubscription"
-                      imageVersion = "${{ parameters.imageTag }}"
-                      deployAll = true
-                }
-                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
-                runPipeline -pipelineId "4" -pat $pat -parameters $parameters
+                  Write-Host "*** Automation Test is in Running. Please wait. ***"
+                  . "$(Build.SourcesDirectory)/powershell-scripts/deployService.ps1"
+                  upgradeHelmDeployment -imageName "usersubscription" -imageTag "${{ parameters.imageTag }}" -servicePort "8090"
+                  . "$(Build.SourcesDirectory)/powershell-scripts/deployService.ps1"
+                  upgradeHelmDeployment -imageName "videogameproducts" -imageTag "${{ parameters.imageTag }}" -servicePort "8100"
+                  . "$(Build.SourcesDirectory)/powershell-scripts/deployService.ps1"
+                  upgradeHelmDeployment -imageName "videogamestore" -imageTag "${{ parameters.imageTag }}" -servicePort "8080"
+            displayName: 'Replace Images to Minikube'
+          - task: PowerShell@2
+            inputs:
+              targetType: 'inline'
+              script: |
+                kubectl get pods -n usersubscription
+                kubectl get pods -n videogameproducts
+                kubectl get pods -n videogamestore
+            displayName: 'Show Pod Output'
   - stage: Test_Automation
     displayName: 'Test Automation'
     jobs:
@@ -142,43 +167,55 @@ stages:
           name: Default
         steps:
           - task: PowerShell@2
-            displayName: 'Automation Pipeline'
             inputs:
               targetType: 'inline'
               script: |
-                Write-Host "*** Pipeline Automation Test is in Running. This Pipeline will continue after finished. ***"
-                $pat = "$(authentication)"
-                $parameters = @{
-                      USERSUBSCRIPTION_TEST = true
-                      VIDEOGAMEPRODUCTS_TEST = true
-                      VIDEOGAMESTORE_TEST = true
-                }
-                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
-                runPipeline -pipelineId "7" -pat $pat -parameters $parameters
-  - stage: Cleanup
-    displayName: Cleanup Stage
-    dependsOn: Test_Automation
-    condition: always()
-    jobs:
-      - job: CleanupJob
-        displayName: Cleanup Job
-        pool:
-          name: Default
-        steps:
-          - script: |
-              if [ "$(isPullRequest)" = true ]; then
-                  echo "Pipeline Success"
-                  docker image ls | grep usersubscription
-                  docker image ls | grep videogameproducts
-                  docker image ls | grep videogamestore
-                  helm list --short -n usersubscription
-                  helm list --short -n videogameproducts
-                  helm list --short -n videogamestore
-              else
-                  echo "Pipeline Failure"
-              fi
-            displayName: 'Print Pipeline Status'
-          - task: DeleteFiles@1
+                Write-Host "*** Automation Test is in Running. Please wait. ***"
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                prepareEndpoints -microservice "usersubscription"
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                installDependenciesNodeJs -microservice "usersubscription"
+                Write-Host "** ADDING FOUR USERS FOR A SUBSCRIPTION MONHLY ** SLEEP FOR 20 SECONDS"
+                Start-Sleep 20
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                runTestCucumber -microservice "usersubscription" -testType "postrequestmonthly"
+                Write-Host "** ADDING FOUR USERS FOR A SUBSCRIPTION ANNUAL ** SLEEP FOR 20 SECONDS"
+                Start-Sleep 20
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                runTestCucumber -microservice "usersubscription" -testType "getrequest"
+            displayName: 'Test UserSubscription'
+          - task: PowerShell@2
             inputs:
-              sourceFolder: '$(Build.SourcesDirectory)'
-              contents: '**'
+              targetType: 'inline'
+              script: |
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                prepareEndpoints -microservice "videogameproducts"
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                installDependenciesNodeJs -microservice "videogameproducts"
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                runTestCucumber -microservice "videogameproducts" -testType "postrequest"
+                Write-Host "*** PRODUCT ID TO BE DELETED : 1 *** SLEEP FOR 20 SECONDS"
+                Start-Sleep 20
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                runTestCucumber -microservice "videogameproducts" -testType "deleterequest"
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                runTestCucumber -microservice "videogameproducts" -testType "getrequest"
+            displayName: 'Test VideogameProducts'
+          - task: PowerShell@2
+            inputs:
+              targetType: 'inline'
+              script: |
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                prepareEndpoints -microservice "videogamestore"
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                installDependenciesNodeJs -microservice "videogamestore"
+                Write-Host "*** SYNCRONIZING DATABASES OF USERSUBSCRIPTION AND VIDEOGAMEPRODUCTS ***"
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                runTestCucumber -microservice "videogamestore" -testType "synchronize"
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                runTestCucumber -microservice "videogamestore" -testType "postrequest"
+                Write-Host "*** WAITING FOR 20 SECONDS AFTER SEND GETREQUEST TEST ***"
+                Start-Sleep 20
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                runTestCucumber -microservice "videogamestore" -testType "getrequest"
+            displayName: 'Test VideogameStore'
