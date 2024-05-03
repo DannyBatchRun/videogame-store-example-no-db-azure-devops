@@ -12,9 +12,6 @@ function runPipeline {
     $organizationUrl = "https://dev.azure.com/infraplayground"
     $projectName = "videogame-store-example-infrastructure"
     $url = "$organizationUrl/$projectName/_apis/build/builds?api-version=6.0"
-    Write-Host "ORGANIZATIONURL!!! $organizationUrl"
-    Write-Host "PAT!!! $pat"
-    Write-Host "PARAMETERS!!! $parameters"
     $body = @{
         definition = @{
             id = $pipelineId
@@ -30,7 +27,12 @@ function runPipeline {
     Write-Host "PARAMETERS!!! $parameters"
     Write-Host "BODY!!! $body"
     Write-Host "HEADERS!!! $headers"
-    Invoke-RestMethod -Uri $url -Method Post -Body $body -Headers $headers
+    try {
+        Invoke-RestMethod -Uri $url -Method Post -Body $body -Headers $headers
+        Write-Host "Pipeline avviata con successo."
+    } catch {
+        Write-Host "Si è verificato un errore durante l'avvio della pipeline: $_"
+    }
     $completedPipeline = $false
     while (-not $completedPipeline) {
         $statusPipelineCommand = "az pipelines runs show --id $pipelineId --org $organizationUrl --project $projectName --output json"
@@ -180,6 +182,9 @@ function cleanLocalInfrastructures {
         }
     }
 }
+
+
+
 
 
 
