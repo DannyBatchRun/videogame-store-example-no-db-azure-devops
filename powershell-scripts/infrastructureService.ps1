@@ -12,6 +12,9 @@ function runPipeline {
     $organizationUrl = "https://dev.azure.com/infraplayground"
     $projectName = "videogame-store-example-infrastructure"
     $url = "$organizationUrl/$projectName/_apis/build/builds?api-version=6.0"
+    Write-Host "ORGANIZATIONURL!!! $organizationUrl"
+    Write-Host "PAT!!! $pat"
+    Write-Host "PARAMETERS!!! $parameters"
     $body = @{
         definition = @{
             id = $pipelineId
@@ -22,6 +25,11 @@ function runPipeline {
         "Content-Type" = "application/json"
         Authorization = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$pat"))
     }
+    Write-Host "ORGANIZATIONURL!!! $organizationUrl"
+    Write-Host "PAT!!! $pat"
+    Write-Host "PARAMETERS!!! $parameters"
+    Write-Host "BODY!!! $body"
+    Write-Host "HEADERS!!! $headers"
     Invoke-RestMethod -Uri $url -Method Post -Body $body -Headers $headers
     $completedPipeline = $false
     while (-not $completedPipeline) {
@@ -172,6 +180,9 @@ function cleanLocalInfrastructures {
         }
     }
 }
+
+
+
 
 
 
