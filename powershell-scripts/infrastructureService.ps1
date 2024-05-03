@@ -11,7 +11,7 @@ function runPipeline {
     )
     $organizationUrl = "https://dev.azure.com/infraplayground"
     $projectName = "videogame-store-example-infrastructure"
-    $url = "$organizationUrl/$projectName/_apis/build/builds?api-version=6.0"
+    $url = "$organizationUrl/$projectName/_apis/build/builds?api-version=6.0&pat=$pat"
     $body = @{
         definition = @{
             id = $pipelineId
@@ -20,7 +20,6 @@ function runPipeline {
     } | ConvertTo-Json
     $headers = @{
         "Content-Type" = "application/json"
-        "Authorization" = "Bearer $pat"
     }
     Write-Host "ORGANIZATIONURL!!! $organizationUrl"
     Write-Host "PAT!!! $pat"
@@ -182,6 +181,9 @@ function cleanLocalInfrastructures {
         }
     }
 }
+
+
+
 
 
 
