@@ -98,18 +98,23 @@ stages:
         pool:
           name: Default
         steps:
-          - task: PowerShell@2
-            displayName: 'Build/Push Pipeline'
+          - task: UsePythonVersion@0
             inputs:
-              targetType: 'inline'
-              script: |
-                Write-Host "*** Pipeline Build in Local is in Running. This Pipeline will continue after finished. ****"
-                $pat = "$(authentication)"
-                $parameters = @{
-                      imageTag = "${{ parameters.imageTag }}"
-                }
-                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
-                runPipeline -pipelineId "3" -pat $pat -parameters $parameters
+              versionSpec: '3.x'
+              addToPath: true
+          - script: |
+              print(f"*** Pipeline Deploy in Local is in Running. This Pipeline will continue after finished. ****")
+              from azure.devops.connection import Connection
+              from msrest.authentication import BasicAuthentication
+              personal_access_token = "$(authentication)"
+              organization_url = "https://dev.azure.com/infraplayground"
+              credentials = BasicAuthentication('', personal_access_token)
+              connection = Connection(base_url=organization_url, creds=credentials)
+              pipeline_client = connection.clients.get_build_client()
+              project_name = "videogame-store-example-infrastructure"
+              pipeline_id = "3"
+              build = pipeline_client.queue_build(project=project_name, definition_id=int(pipeline_id))
+            displayName: 'Build/Deploy Pipeline'
   - stage: Replace_Images_Deployment
     displayName: 'Replace Images Deployment'
     jobs:
