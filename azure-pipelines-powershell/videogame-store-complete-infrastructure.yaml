@@ -98,10 +98,6 @@ stages:
         pool:
           name: Default
         steps:
-          - task: UsePythonVersion@0
-            inputs:
-              versionSpec: '3.x'
-              addToPath: true
           - script: |
               print(f"*** Pipeline Deploy in Local is in Running. This Pipeline will continue after finished. ****")
               from azure.devops.connection import Connection
