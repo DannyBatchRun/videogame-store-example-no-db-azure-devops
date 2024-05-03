@@ -13,8 +13,7 @@ parameters:
     default: '1.0.0'
 
 variables:
-- group: 'BuildParameters'
-- name: 'authentication'
+  - group: 'BuildParameters'
 
 stages:
   - stage: CheckRunningPackages
@@ -105,7 +104,7 @@ stages:
               targetType: 'inline'
               script: |
                 Write-Host "*** Pipeline Build in Local is in Running. This Pipeline will continue after finished. ****"
-                $pat = $[variables.BuildParameters.authentication]
+                $pat = "$(BuildParameters.authentication)"
                 $parameters = @{
                       imageTag = "${{ parameters.imageTag }}"
                 }
@@ -125,7 +124,7 @@ stages:
               targetType: 'inline'
               script: |
                 Write-Host *** Pipeline Deploy in Local is in Running. This Pipeline will continue after finished. ****
-                $pat = $[variables.BuildParameters.authentication]
+                $pat = "$(BuildParameters.authentication)"
                 $parameters = @{
                       imageName = "usersubscription"
                       imageVersion = "${{ parameters.imageTag }}"
@@ -147,7 +146,7 @@ stages:
               targetType: 'inline'
               script: |
                 Write-Host "*** Pipeline Automation Test is in Running. This Pipeline will continue after finished. ***"
-                $pat = $[variables.BuildParameters.authentication]
+                $pat = "$(BuildParameters.authentication)"
                 $parameters = @{
                       USERSUBSCRIPTION_TEST = true
                       VIDEOGAMEPRODUCTS_TEST = true
@@ -155,36 +154,9 @@ stages:
                 }
                 . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
                 runPipeline -pipelineId "7" -pat $pat -parameters $parameters
-  - stage: Deploy_GKE
-    displayName: 'Deploy on GKE'
-    jobs:
-      - job: Deploy_GKE
-        displayName: 'Deploy on GKE'
-        pool:
-          name: Default
-        steps:
-          - task: PowerShell@2
-            inputs:
-              targetType: 'inline'
-              script: |
-                $proceed = $(System.Prompt.run("Proceed with GKE deploy?", "warning", "Yes", "No", "warn")).ToLower()
-                if ($proceed -eq "yes") {
-                  Write-Host "User confirmed. Proceeding with deploy."
-                  Write-Output "##vso[task.setvariable variable=proceedWithDeploy]true"
-                }
-                else {
-                  Write-Host "User canceled. Skipping deploy."
-                }
-          - script: |
-              if [ "$(proceedWithDeploy)" == "true" ]; then
-                echo "Deployed FAKE on Google Kubernetes Engine"
-              else
-                echo "Skipping deploy as user canceled."
-              fi
-            displayName: 'Deploy Condition'
   - stage: Cleanup
     displayName: Cleanup Stage
-    dependsOn: Deploy_GKE
+    dependsOn: Test_Automation
     condition: always()
     jobs:
       - job: CleanupJob
