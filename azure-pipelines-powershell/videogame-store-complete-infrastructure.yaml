@@ -99,7 +99,7 @@ stages:
           name: Default
         steps:
           - script: |
-              print(f"*** Pipeline Deploy in Local is in Running. This Pipeline will continue after finished. ****")
+              print("*** Pipeline Deploy in Local is in Running. This Pipeline will continue after finished. ***")
               from azure.devops.connection import Connection
               from msrest.authentication import BasicAuthentication
               personal_access_token = "$(authentication)"
