@@ -13,8 +13,7 @@ parameters:
     default: '1.0.0'
 
 variables:
-  proceedWithDeploy: false
-name: 'BuildParameters'
+- group: 'BuildParameters'
 
 stages:
   - stage: CheckRunningPackages
