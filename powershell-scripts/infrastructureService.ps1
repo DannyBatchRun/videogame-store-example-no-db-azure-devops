@@ -5,6 +5,41 @@ function call() {
 
 function runPipeline {
     param(
+        [string]$pipelineId,
+        [string]$pat,
+        [hashtable]$parameters
+    )
+    $organizationUrl = "https://dev.azure.com/infraplayground"
+    $projectName = "videogame-store-example-infrastructure"
+    $url = "$organizationUrl/$projectName/_apis/build/builds?api-version=6.0"
+    $body = @{
+        definition = @{
+            id = $pipelineId
+        }
+        parameters = $parameters
+    } | ConvertTo-Json
+    $headers = @{
+        "Content-Type" = "application/json"
+        Authorization = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$pat"))
+    }
+    Invoke-RestMethod -Uri $url -Method Post -Body $body -Headers $headers
+    $completedPipeline = $false
+    while (-not $completedPipeline) {
+        $statusPipelineCommand = "az pipelines runs show --id $pipelineId --org $organizationUrl --project $projectName --output json"
+        $statusPipeline = Invoke-Expression $statusPipelineCommand | ConvertFrom-Json
+        Write-Host "Stato attuale della pipeline:" $statusPipeline.status
+        if ($statusPipeline.status -eq "completed") {
+            $completedPipeline = $true
+            Write-Host "Pipeline completata."
+        } else {
+            Write-Host "Pipeline non completata. Controllo previsto tra circa un minuto."
+            Start-Sleep -Seconds 60
+        }
+    }
+}
+
+function runPipelineOld {
+    param(
         [string]$name,
         [string]$branch,
         [string]$passArguments
@@ -137,6 +172,11 @@ function cleanLocalInfrastructures {
         }
     }
 }
+
+
+
+
+
 
 
 

@@ -14,6 +14,7 @@ parameters:
 
 variables:
   proceedWithDeploy: false
+name: 'Build Parameters'
 
 stages:
   - stage: CheckRunningPackages
@@ -91,7 +92,7 @@ stages:
                 . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
                 createHelmManifest -microservice "videogamestore"
   - stage: Build_and_Push_On_Docker
-    displayName: Build and Push on Docker
+    displayName: 'Build And Push On Docker'
     jobs:
       - job: Build_and_Push_On_Docker
         displayName: 'Build and Push on Docker'
@@ -102,18 +103,14 @@ stages:
             displayName: 'Build/Push Pipeline'
             inputs:
               targetType: 'inline'
-              pwsh: |
-                [string]$branchName = "$(Build.SourceBranchName)"
-                [string]$paraReference = "imageTag=${{ parameters.imageTag }}"
+              script: |
                 Write-Host "*** Pipeline Build in Local is in Running. This Pipeline will continue after finished. ****"
-                Write-Host "*** Branch Name : $branchName ***"
-                Write-Host "*** Composed Arguments: $paraReference ***" 
-                powershell -Command "& { . '.\$($Build.SourcesDirectory)\powershell-scripts\infrastructureService.ps1'; runPipeline -name 'videogame-store-build-complete' -branch '$branchName' -passArguments '$paraReference' }"
-          - task: DeleteFiles@1
-            displayName: 'Cleanup'
-            inputs:
-              sourceFolder: '$(Build.SourcesDirectory)'
-              contents: '**'
+                $pat = $[group.BuildParameters.params.authentication]
+                $parameters = @{
+                      imageTag = "${{ parameters.imageTag }}"
+                }
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                runPipeline -pipelineId "3" -pat $pat -parameters $parameters
   - stage: Replace_Images_Deployment
     displayName: 'Replace Images Deployment'
     jobs:
@@ -123,47 +120,41 @@ stages:
           name: Default
         steps:
           - task: PowerShell@2
-            displayName: 'Deploy Pipeline'
+            displayName: 'Deploy Local Pipeline'
             inputs:
               targetType: 'inline'
-              pwsh: |
-                [string]$branchName = "$(Build.SourceBranchName)"
-                [string]$paraReference = "imageName=usersubscription imageVersion=${{ parameters.imageTag }} deployAll=true"
+              script: |
                 Write-Host *** Pipeline Deploy in Local is in Running. This Pipeline will continue after finished. ****
-                Write-Host "*** Branch Name : $branchName ***"
-                Write-Host "*** Composed Arguments: $paraReference ***" 
-                powershell -Command "& { . '.\$($Build.SourcesDirectory)\powershell-scripts\infrastructureService.ps1'; runPipeline -name 'videogame-store-deploy-complete' -branch '$branchName' -passArguments '$paraReference' }"
-          - task: DeleteFiles@1
-            displayName: 'Cleanup'
-            inputs:
-              sourceFolder: '$(Build.SourcesDirectory)'
-              contents: '**'
+                $pat = $[group.BuildParameters.params.authentication]
+                $parameters = @{
+                      imageName = "usersubscription"
+                      imageVersion = "${{ parameters.imageTag }}"
+                      deployAll = true
+                }
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                runPipeline -pipelineId "4" -pat $pat -parameters $parameters
   - stage: Test_Automation
     displayName: 'Test Automation'
-    pool:
-      name: Default
     jobs:
       - job: Test_Automation
         displayName: 'Test Automation'
+        pool:
+          name: Default
         steps:
           - task: PowerShell@2
-            displayName: 'Test Automation Pipeline'
+            displayName: 'Automation Pipeline'
             inputs:
               targetType: 'inline'
-              pwsh: |
-                [string]$paraReference = "USERSUBSCRIPTION_TEST=true VIDEOGAMEPRODUCTS_TEST=true VIDEOGAMESTORE_TEST=true"
-                [string]$branchName = "$(Build.SourceBranchName)"
+              script: |
                 Write-Host "*** Pipeline Automation Test is in Running. This Pipeline will continue after finished. ***"
-                Write-Host "*** Waiting Containers for start. Sleep for 5 minutes. ***"
-                Write-Host "*** Branch Name : $branchName ***"
-                Write-Host "*** Composed Arguments: $paraReference ***" 
-                Start-Sleep -Seconds 300
-                powershell -Command "& { . '.\$($Build.SourcesDirectory)\powershell-scripts\infrastructureService.ps1'; runPipeline -name 'videogame-store-automation-test-complete' -branch '$branchName' -passArguments '$paraReference' }"
-          - task: DeleteFiles@1
-            displayName: 'Cleanup'
-            inputs:
-              sourceFolder: '$(Build.SourcesDirectory)'
-              contents: '**'
+                $pat = $[group.BuildParameters.params.authentication]
+                $parameters = @{
+                      USERSUBSCRIPTION_TEST = true
+                      VIDEOGAMEPRODUCTS_TEST = true
+                      VIDEOGAMESTORE_TEST = true
+                }
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                runPipeline -pipelineId "7" -pat $pat -parameters $parameters
   - stage: Deploy_GKE
     displayName: 'Deploy on GKE'
     jobs:
