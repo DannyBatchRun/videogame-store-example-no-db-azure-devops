@@ -105,7 +105,7 @@ stages:
               targetType: 'inline'
               script: |
                 Write-Host "*** Pipeline Build in Local is in Running. This Pipeline will continue after finished. ****"
-                $pat = $[group.BuildParameters.params.authentication]
+                $pat = $(params.authentication)
                 $parameters = @{
                       imageTag = "${{ parameters.imageTag }}"
                 }
@@ -125,7 +125,7 @@ stages:
               targetType: 'inline'
               script: |
                 Write-Host *** Pipeline Deploy in Local is in Running. This Pipeline will continue after finished. ****
-                $pat = $[group.BuildParameters.params.authentication]
+                $pat = $(params.authentication)
                 $parameters = @{
                       imageName = "usersubscription"
                       imageVersion = "${{ parameters.imageTag }}"
@@ -147,7 +147,7 @@ stages:
               targetType: 'inline'
               script: |
                 Write-Host "*** Pipeline Automation Test is in Running. This Pipeline will continue after finished. ***"
-                $pat = $[group.BuildParameters.params.authentication]
+                $pat = $(params.authentication)
                 $parameters = @{
                       USERSUBSCRIPTION_TEST = true
                       VIDEOGAMEPRODUCTS_TEST = true
