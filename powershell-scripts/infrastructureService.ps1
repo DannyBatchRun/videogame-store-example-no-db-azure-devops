@@ -82,20 +82,19 @@ function controlContext {
     }
 }
 
-function cleanLocalInfrastructures {
-    Write-Host "**** Deleting Helm Manifests ****"
-    Invoke-Expression 'helm uninstall usersubscription -n usersubscription -ErrorAction SilentlyContinue'
-    Invoke-Expression 'helm uninstall videogameproducts -n videogameproducts -ErrorAction SilentlyContinue'
-    Invoke-Expression 'helm uninstall videogamestore -n videogamestore -ErrorAction SilentlyContinue'
-    Write-Host "**** Deleting Docker Images ****"
-    docker images -q dannybatchrun/usersubscription | ForEach-Object { docker rmi $_ -f -ErrorAction SilentlyContinue }
-    docker images -q dannybatchrun/videogameproducts | ForEach-Object { docker rmi $_ -f -ErrorAction SilentlyContinue }
-    docker images -q dannybatchrun/videogamestore | ForEach-Object { docker rmi $_ -f -ErrorAction SilentlyContinue }
-
-    Write-Host "**** Deleting Kubernetes Deployments ****"
+function CleanLocalInfrastructures {
     try {
-        $deployments = kubectl get deployments --all-namespaces -o json -ErrorAction Stop | ConvertFrom-Json
-        if ($null -ne $deployments.items) {
+        Write-Host "**** Cleaning old builds with Helm and Docker ****"
+        Write-Host "**** Deleting Helm Manifests ****"
+        Invoke-Expression 'helm uninstall usersubscription -n usersubscription'
+        Invoke-Expression 'helm uninstall videogamestore -n videogamestore'
+        Write-Host "**** Deleting Docker Images ****"
+        docker images -q dannybatchrun/usersubscription | ForEach-Object { docker rmi $_ -f }
+        docker images -q dannybatchrun/videogameproducts | ForEach-Object { docker rmi $_ -f }
+        docker images -q dannybatchrun/videogamestore | ForEach-Object { docker rmi $_ -f }
+        Write-Host "**** Deleting Kubernetes Deployments ****"
+        $deployments = kubectl get deployments --all-namespaces -o json | ConvertFrom-Json
+        if ($deployments.items -ne $null) {
             foreach ($deployment in $deployments.items) {
                 kubectl delete deployment $deployment.metadata.name --namespace $deployment.metadata.namespace
             }
@@ -103,7 +102,7 @@ function cleanLocalInfrastructures {
             Write-Host "No deployments found."
         }
     } catch {
-        Write-Host "Error retrieving deployment information."
+        Write-Host "An error occurred: $_"
     }
 }
 
