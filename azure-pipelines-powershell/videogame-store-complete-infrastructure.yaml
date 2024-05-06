@@ -1,0 +1,223 @@
+trigger:
+  batch: true
+  branches:
+    include:
+      - infrastructureIntegration
+
+resources:
+  - repo: self
+
+parameters:
+  - name: imageTag
+    type: string
+    default: '1.0.0'
+
+variables:
+  - group: 'BuildParameters'
+
+stages:
+  - stage: CheckRunningPackages
+    displayName: Check Running Packages
+    jobs:
+      - job: CheckRunningPackages
+        displayName: Check Running Packages
+        pool:
+          name: Default
+        steps:
+          - task: PowerShell@2
+            displayName: Check Running Packages
+            inputs:
+              targetType: 'inline'
+              script: |
+                sudo apt update
+                sudo apt openjdk-21-jdk -y
+                $env:JAVA_HOME = "/usr/lib/jvm/java-1.21.0-openjdk-amd64"
+                $env:PATH = "$env:JAVA_HOME/bin;$env:PATH"
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                executeCommand -command "helm version"
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                executeCommand -command "java --version"
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                executeCommand -command "mvn -v"
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                executeCommand -command "npm version"
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                executeCommand -command "minikube version"
+                $minikubeStatus = (minikube status 2>$null).Trim()
+                if ($minikubeStatus -contains "host: Stopped") {
+                  . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                  executeCommand -command "minikube start"
+                } else {
+                  Write-Host "Minikube already started"
+                }
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                controlContext -requested "minikube"
+  - stage: CleanPreviousInstall
+    displayName: Clean Previous Install
+    jobs:
+      - job: CleanPreviousInstall
+        displayName: Clean Previous Install
+        pool:
+          name: Default
+        steps:
+          - task: PowerShell@2
+            displayName: Clean Previous Install
+            inputs:
+              targetType: 'inline'
+              script: |
+                Write-Host "**** Cleaning old builds with Helm and Docker ****"
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                cleanLocalInfrastructures
+                Write-Host "**** Docker Images Pruned ****"
+  - stage: HelmInstall
+    displayName: Helm Install
+    jobs:
+      - job: HelmInstall
+        displayName: Helm Install
+        pool:
+          name: Default
+        steps:
+          - task: PowerShell@2
+            displayName: Helm Install
+            inputs:
+              targetType: 'inline'
+              script: |
+                Write-Host "**** Creating Three Helm Manifests Empty. It will start in a minute. ****"
+                Start-Sleep -Seconds 60
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                createHelmManifest -microservice "usersubscription"
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                createHelmManifest -microservice "videogameproducts"
+                . "$(Build.SourcesDirectory)/powershell-scripts/infrastructureService.ps1"
+                createHelmManifest -microservice "videogamestore"
+  - stage: Build_and_Push_On_Docker
+    displayName: 'Build And Push On Docker'
+    jobs:
+      - job: Build_and_Push_On_Docker
+        displayName: Maven Stage
+        pool:
+          name: Default
+        steps:
+          - task: PowerShell@2
+            inputs:
+              targetType: 'inline'
+              script: |
+                Write-Host "*** Build in Local is in Running. Please wait. ***"
+                . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
+                createJarFile -Path "$(Build.SourcesDirectory)/store-usersubscription-example"
+                . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
+                createJarFile -Path "$(Build.SourcesDirectory)/store-videogame-products-example"
+                . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
+                createJarFile -Path "$(Build.SourcesDirectory)/store-videogamestore-final-example"
+            displayName: 'Build Maven Stage'
+          - task: Docker@2
+            inputs:
+              containerRegistry: 'DockerHub'
+              command: 'login'
+            displayName: 'Docker Login'
+          - task: PowerShell@2
+            inputs:
+              targetType: 'inline'
+              script: |
+                . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
+                buildAndPushOnDocker -Path "$(Build.SourcesDirectory)/store-usersubscription-example" -ImageName "usersubscription" -ImageTag ${{ parameters.imageTag }}
+                . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
+                buildAndPushOnDocker -Path "$(Build.SourcesDirectory)/store-videogame-products-example" -ImageName "videogameproducts" -ImageTag ${{ parameters.imageTag }}            
+                . "$(Build.SourcesDirectory)/powershell-scripts/buildService.ps1"
+                buildAndPushOnDocker -Path "$(Build.SourcesDirectory)/store-videogamestore-final-example" -ImageName "videogamestore" -ImageTag ${{ parameters.imageTag }}
+            displayName: 'Build and Push Stage'
+          - task: Docker@2
+            inputs:
+              command: 'logout'
+            displayName: 'Docker Logout'
+  - stage: Replace_Images_Deployment
+    displayName: 'Replace Images Deployment'
+    jobs:
+      - job: Replace_Images_Deployment
+        displayName: 'Replace Images Deployment'
+        pool:
+          name: Default
+        steps:
+          - task: PowerShell@2
+            inputs:
+              targetType: 'inline'
+              script: |
+                  Write-Host "*** Automation Test is in Running. Please wait. ***"
+                  . "$(Build.SourcesDirectory)/powershell-scripts/deployService.ps1"
+                  upgradeHelmDeployment -imageName "usersubscription" -imageTag "${{ parameters.imageTag }}" -servicePort "8090"
+                  . "$(Build.SourcesDirectory)/powershell-scripts/deployService.ps1"
+                  upgradeHelmDeployment -imageName "videogameproducts" -imageTag "${{ parameters.imageTag }}" -servicePort "8100"
+                  . "$(Build.SourcesDirectory)/powershell-scripts/deployService.ps1"
+                  upgradeHelmDeployment -imageName "videogamestore" -imageTag "${{ parameters.imageTag }}" -servicePort "8080"
+            displayName: 'Replace Images to Minikube'
+          - task: PowerShell@2
+            inputs:
+              targetType: 'inline'
+              script: |
+                kubectl get pods -n usersubscription
+                kubectl get pods -n videogameproducts
+                kubectl get pods -n videogamestore
+            displayName: 'Show Pod Output'
+  - stage: Test_Automation
+    displayName: 'Test Automation'
+    jobs:
+      - job: Test_Automation
+        displayName: 'Test Automation'
+        pool:
+          name: Default
+        steps:
+          - task: PowerShell@2
+            inputs:
+              targetType: 'inline'
+              script: |
+                Write-Host "*** Automation Test is in Running. Please wait. ***"
+                Write-Host "*** Waiting Containers for start. Sleep for 5 minutes. ***"
+                Start-Sleep -Seconds 300
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                prepareEndpoints -microservice "usersubscription"
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                installDependenciesNodeJs -microservice "usersubscription"
+                Write-Host "** ADDING FOUR USERS FOR A SUBSCRIPTION MONHLY ** SLEEP FOR 20 SECONDS"
+                Start-Sleep 20
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                runTestCucumber -microservice "usersubscription" -testType "postrequestmonthly"
+                Write-Host "** ADDING FOUR USERS FOR A SUBSCRIPTION ANNUAL ** SLEEP FOR 20 SECONDS"
+                Start-Sleep 20
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                runTestCucumber -microservice "usersubscription" -testType "getrequest"
+            displayName: 'Test UserSubscription'
+          - task: PowerShell@2
+            inputs:
+              targetType: 'inline'
+              script: |
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                prepareEndpoints -microservice "videogameproducts"
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                installDependenciesNodeJs -microservice "videogameproducts"
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                runTestCucumber -microservice "videogameproducts" -testType "postrequest"
+                Write-Host "*** PRODUCT ID TO BE DELETED : 1 *** SLEEP FOR 20 SECONDS"
+                Start-Sleep 20
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                runTestCucumber -microservice "videogameproducts" -testType "deleterequest"
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                runTestCucumber -microservice "videogameproducts" -testType "getrequest"
+            displayName: 'Test VideogameProducts'
+          - task: PowerShell@2
+            inputs:
+              targetType: 'inline'
+              script: |
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                prepareEndpoints -microservice "videogamestore"
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                installDependenciesNodeJs -microservice "videogamestore"
+                Write-Host "*** SYNCRONIZING DATABASES OF USERSUBSCRIPTION AND VIDEOGAMEPRODUCTS ***"
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                runTestCucumber -microservice "videogamestore" -testType "synchronize"
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                runTestCucumber -microservice "videogamestore" -testType "postrequest"
+                Write-Host "*** WAITING FOR 20 SECONDS AFTER SEND GETREQUEST TEST ***"
+                Start-Sleep 20
+                . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
+                runTestCucumber -microservice "videogamestore" -testType "getrequest"
+            displayName: 'Test VideogameStore'
