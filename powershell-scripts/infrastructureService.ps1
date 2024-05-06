@@ -87,6 +87,7 @@ function CleanLocalInfrastructures {
         Write-Host "**** Cleaning old builds with Helm and Docker ****"
         Write-Host "**** Deleting Helm Manifests ****"
         Invoke-Expression 'helm uninstall usersubscription -n usersubscription'
+        Invoke-Expression 'helm uninstall videogameproducts -n videogameproducts'
         Invoke-Expression 'helm uninstall videogamestore -n videogamestore'
         Write-Host "**** Deleting Docker Images ****"
         docker images -q dannybatchrun/usersubscription | ForEach-Object { docker rmi $_ -f }
@@ -94,7 +95,7 @@ function CleanLocalInfrastructures {
         docker images -q dannybatchrun/videogamestore | ForEach-Object { docker rmi $_ -f }
         Write-Host "**** Deleting Kubernetes Deployments ****"
         $deployments = kubectl get deployments --all-namespaces -o json | ConvertFrom-Json
-        if ($deployments.items -ne $null) {
+        if ($null -ne $deployments.items) {
             foreach ($deployment in $deployments.items) {
                 kubectl delete deployment $deployment.metadata.name --namespace $deployment.metadata.namespace
             }
@@ -105,6 +106,9 @@ function CleanLocalInfrastructures {
         Write-Host "An error occurred: $_"
     }
 }
+
+
+
 
 
 
