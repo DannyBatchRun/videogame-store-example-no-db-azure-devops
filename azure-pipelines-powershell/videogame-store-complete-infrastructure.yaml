@@ -171,6 +171,8 @@ stages:
               targetType: 'inline'
               script: |
                 Write-Host "*** Automation Test is in Running. Please wait. ***"
+                Write-Host "*** Waiting Containers for start. Sleep for 5 minutes. ***"
+                Start-Sleep -Seconds 300
                 . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
                 prepareEndpoints -microservice "usersubscription"
                 . "$(Build.SourcesDirectory)/powershell-scripts/automationService.ps1"
