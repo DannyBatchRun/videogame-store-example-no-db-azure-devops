@@ -3,76 +3,6 @@ function call() {
     return this
 }
 
-function runPipeline {
-    param(
-        [string]$pipelineId,
-        [string]$pat,
-        [hashtable]$parameters
-    )
-    $organizationUrl = "https://dev.azure.com/infraplayground"
-    $projectName = "videogame-store-example-infrastructure"
-    $url = "$organizationUrl/$projectName/_apis/build/builds?api-version=6.0&pat=$pat"
-    $body = @{
-        definition = @{
-            id = $pipelineId
-        }
-        parameters = $parameters
-    } | ConvertTo-Json
-    $headers = @{
-        "Content-Type" = "application/json"
-    }
-    Write-Host "ORGANIZATIONURL!!! $organizationUrl"
-    Write-Host "PAT!!! $pat"
-    Write-Host "PARAMETERS!!! $parameters"
-    Write-Host "BODY!!! $body"
-    Write-Host "HEADERS!!! $headers"
-    try {
-        Invoke-RestMethod -Uri $url -Method Post -Body $body -Headers $headers
-        Write-Host "Pipeline avviata con successo."
-    } catch {
-        Write-Host "Si è verificato un errore durante l'avvio della pipeline: $_"
-    }
-    $completedPipeline = $false
-    while (-not $completedPipeline) {
-        $statusPipelineCommand = "az pipelines runs show --id $pipelineId --org $organizationUrl --project $projectName --output json"
-        $statusPipeline = Invoke-Expression $statusPipelineCommand | ConvertFrom-Json
-        Write-Host "Stato attuale della pipeline:" $statusPipeline.status
-        if ($statusPipeline.status -eq "completed") {
-            $completedPipeline = $true
-            Write-Host "Pipeline completata."
-        } else {
-            Write-Host "Pipeline non completata. Controllo previsto tra circa un minuto."
-            Start-Sleep -Seconds 60
-        }
-    }
-}
-
-function runPipelineOld {
-    param(
-        [string]$name,
-        [string]$branch,
-        [string]$passArguments
-    )
-    $organization = "https://dev.azure.com/infraplayground"
-    $runPipelineCommand = "az pipelines run --name $name --org $organization --project videogame-store-example-infrastructure --branch $branch --parameters $passArguments --output json"
-    Write-Host "runPipelineCommand is $runPipelineCommand"
-    $runResult = Invoke-Expression $runPipelineCommand | ConvertFrom-Json
-    $runId = $runResult.id
-    $completedPipeline = $false
-    while (-not $completedPipeline) {
-        $statusPipelineCommand = "az pipelines runs show --id $runId --org $organization --project videogame-store-example-infrastructure --output json"
-        $statusPipeline = Invoke-Expression $statusPipelineCommand | ConvertFrom-Json
-        Write-Host "Stato attuale della pipeline:" $statusPipeline.status
-        if ($statusPipeline.status -eq "completed") {
-            $completedPipeline = $true
-            Write-Host "Pipeline completata."
-        } else {
-            Write-Host "Pipeline non completata. Controllo previsto tra circa un minuto."
-            Start-Sleep -Seconds 60
-        }
-    }
-}
-
 function executeCommand {
     param(
         [string]$command
@@ -154,33 +84,32 @@ function controlContext {
 
 function cleanLocalInfrastructures {
     Write-Host "**** Deleting Helm Manifests ****"
-    Invoke-Expression 'helm uninstall usersubscription -n usersubscription || $true'
-    Invoke-Expression 'helm uninstall usersubscription -n usersubscription || $true'
-    Invoke-Expression 'helm uninstall videogamestore -n videogamestore || $true'
+    Invoke-Expression 'helm uninstall usersubscription -n usersubscription -ErrorAction SilentlyContinue'
+    Invoke-Expression 'helm uninstall videogameproducts -n videogameproducts -ErrorAction SilentlyContinue'
+    Invoke-Expression 'helm uninstall videogamestore -n videogamestore -ErrorAction SilentlyContinue'
     Write-Host "**** Deleting Docker Images ****"
     docker images -q dannybatchrun/usersubscription | ForEach-Object { docker rmi $_ -f -ErrorAction SilentlyContinue }
     docker images -q dannybatchrun/videogameproducts | ForEach-Object { docker rmi $_ -f -ErrorAction SilentlyContinue }
-    docker images -q dannybatchrun/videogamestore | ForEach-Object {
-        docker rmi $_ -f -ErrorAction SilentlyContinue
-        $deployments = kubectl get deployments --all-namespaces -o json -ErrorAction SilentlyContinue | ConvertFrom-Json
-        try
-        {
-            $deployments = kubectl get deployments --all-namespaces -o json | ConvertFrom-Json
-            if ($null -ne $deployments -or ($deployments.items.metadata.name -notcontains "No resources found"))
-            {
-                kubectl delete deployments --all --all-namespaces
+    docker images -q dannybatchrun/videogamestore | ForEach-Object { docker rmi $_ -f -ErrorAction SilentlyContinue }
+
+    Write-Host "**** Deleting Kubernetes Deployments ****"
+    try {
+        $deployments = kubectl get deployments --all-namespaces -o json -ErrorAction Stop | ConvertFrom-Json
+        if ($null -ne $deployments.items) {
+            foreach ($deployment in $deployments.items) {
+                kubectl delete deployment $deployment.metadata.name --namespace $deployment.metadata.namespace
             }
-            else
-            {
-                Write-Host "Nessun deployment trovato."
-            }
+        } else {
+            Write-Host "No deployments found."
         }
-        catch
-        {
-            Write-Host "Errore durante il recupero delle informazioni sui deployments."
-        }
+    } catch {
+        Write-Host "Error retrieving deployment information."
     }
 }
+
+
+
+
 
 
 
